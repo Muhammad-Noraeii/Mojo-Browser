@@ -177,7 +177,7 @@ class SettingsDialog(QDialog):
         return total
 
     def clear_cookies(self):
-        profile = self.parent().browser.page().profile()
+        profile = self.parent().tabs.currentWidget().page().profile()
         profile.clearHttpCache()
         profile.clearAllVisitedLinks()
         print("Cookies cleared!")
@@ -189,7 +189,7 @@ class SettingsDialog(QDialog):
         print("Cache cleared!")
 
     def clear_history(self):
-        profile = self.parent().browser.page().profile()
+        profile = self.parent().tabs.currentWidget().page().profile()
         profile.clearAllVisitedLinks()
         self.parent().clear_history_data()
         print("History cleared!")
@@ -281,6 +281,61 @@ class MojoBrowser(QMainWindow):
 
         self.apply_styles()
 
+    def apply_styles(self):
+        if self.theme == "Dark":
+            self.setStyleSheet("""
+                QMainWindow {
+                    background-color: #1e1e1e;
+                }
+                QLineEdit {
+                    background-color: #2c2c2c;
+                    color: #ffffff;
+                    border: 1px solid #444;
+                    border-radius: 5px;
+                    padding: 6px;
+                }
+                QPushButton {
+                    background-color: #444;
+                    color: #ffffff;
+                    border: 1px solid #555;
+                    border-radius: 5px;
+                    padding: 6px 12px;
+                }
+                QPushButton:hover {
+                    background-color: #555;
+                }
+                QPushButton:pressed {
+                    background-color: #333;
+                }
+            """)
+        elif self.theme == "Light":
+            self.setStyleSheet("""
+                QMainWindow {
+                    background-color: #ffffff;
+                }
+                QLineEdit {
+                    background-color: #f0f0f0;
+                    color: #000000;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    padding: 6px;
+                }
+                QPushButton {
+                    background-color: #e0e0e0;
+                    color: #000000;
+                    border: 1px solid #bbb;
+                    border-radius: 5px;
+                    padding: 6px 12px;
+                }
+                QPushButton:hover {
+                    background-color: #d0d0d0;
+                }
+                QPushButton:pressed {
+                    background-color: #c0c0c0;
+                }
+            """)
+
+
     def add_new_tab(self, url=None):
         browser = QWebEngineView()
         if url:
@@ -301,8 +356,9 @@ class MojoBrowser(QMainWindow):
 
     def update_address_bar(self, index):
         browser = self.tabs.widget(index)
-        url = browser.url().toString()
-        self.address_bar.setText(url)
+        if browser:
+            url = browser.url().toString()
+            self.address_bar.setText(url)
 
     def load_page(self):
         url = self.address_bar.text().strip()
@@ -354,7 +410,12 @@ class MojoBrowser(QMainWindow):
         self.javascript_enabled = javascript_enabled
         self.block_popups = block_popups
         self.block_mixed_content = block_mixed_content
-        self.browser.setUrl(QUrl(self.home_page))
+
+        # Update the URL of the current tab's browser instance
+        current_browser = self.tabs.currentWidget()
+        if current_browser:
+            current_browser.setUrl(QUrl(self.home_page))
+        
         self.apply_styles()
         self.save_settings()
 
@@ -481,7 +542,7 @@ class MojoBrowser(QMainWindow):
         self.save_history()
         QMessageBox.information(self, "History Cleared", "Browsing history has been cleared.")
 
-    def apply_styles(self):
+def apply_styles(self):
         if self.theme == "Dark":
             self.setStyleSheet("""
                 QMainWindow {
@@ -504,7 +565,7 @@ class MojoBrowser(QMainWindow):
                 QPushButton:hover {
                     background-color: #555;
                 }
-QPushButton:pressed {
+                QPushButton:pressed {
                     background-color: #333;
                 }
             """)
