@@ -260,7 +260,8 @@ class MojoBrowser(QMainWindow):
         self.layout.addLayout(self.nav_bar)
         self.layout.addWidget(self.browser)
 
-        self.browser.setUrl(QUrl(self.home_page))
+        # Load default HTML page
+        self.browser.setUrl(QUrl.fromLocalFile(os.path.abspath("default_page.html")))
         self.browser.urlChanged.connect(self.update_history)
 
         self.apply_styles()
