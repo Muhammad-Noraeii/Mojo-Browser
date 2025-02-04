@@ -277,16 +277,16 @@ class MojoBrowser(QMainWindow):
         self.layout.addLayout(self.nav_bar)
         self.layout.addWidget(self.tabs)
 
-        self.add_new_tab()
+        self.add_new_tab(QUrl.fromLocalFile(os.path.abspath("default_page.html")))  # Load default_page.html in the home tab
 
         self.apply_styles()
 
     def add_new_tab(self, url=None):
         browser = QWebEngineView()
         if url:
-            browser.setUrl(QUrl(url))
+            browser.setUrl(url)
         else:
-            browser.setUrl(QUrl("https://www.google.com"))
+            browser.setUrl(QUrl.fromLocalFile(os.path.abspath("default_page.html")))
         i = self.tabs.addTab(browser, "New Tab")
         self.tabs.setCurrentIndex(i)
         browser.urlChanged.connect(lambda url, browser=browser: self.update_tab_title(browser, url))
@@ -504,13 +504,13 @@ class MojoBrowser(QMainWindow):
                 QPushButton:hover {
                     background-color: #555;
                 }
-                QPushButton:pressed {
+QPushButton:pressed {
                     background-color: #333;
                 }
             """)
         elif self.theme == "Light":
             self.setStyleSheet("""
-QMainWindow {
+                QMainWindow {
                     background-color: #ffffff;
                 }
                 QLineEdit {
