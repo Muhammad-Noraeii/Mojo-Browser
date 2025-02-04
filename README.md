@@ -153,11 +153,11 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## Contact
 
-For issues or feature requests, please open an issue on the [GitHub repository](https://github.com/Muhammad-Noraeii/Advanced-Browser). You can also reach out to the project maintainers at [Mail Me](mailto:Muhammad.Noraeii@gmail.com).
+For issues or feature requests, please open an issue on the [GitHub repository](https://github.com/Muhammad-Noraeii/Advance-Browser). You can also reach out to the project maintainers at [Mail Me](mailto:Muhammad.Noraeii@gmail.com).
 
 ---
 
 ### Developer Links:
 
-- GitHub Repository: [https://github.com/Muhammad-Noraeii/Browser](https://github.com/Muhammad-Noraeii/Advanced-Browser)
-- Issue Tracker: [https://github.com/Muhammad-Noraeii/Browser/issues](https://github.com/Muhammad-Noraeii/Advanced-Browser/issues)
+- GitHub Repository: [https://github.com/Muhammad-Noraeii/Browser](https://github.com/Muhammad-Noraeii/Advance-Browser)
+- Issue Tracker: [https://github.com/Muhammad-Noraeii/Browser/issues](https://github.com/Muhammad-Noraeii/Advance-Browser/issues)
