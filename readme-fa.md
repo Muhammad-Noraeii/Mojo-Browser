@@ -155,5 +155,5 @@ pip install PyQt5 PyQtWebEngine
 
 ### لینک‌های توسعه‌دهنده:
 
-- مخزن گیت‌هاب: [https://github.com/Muhammad-Noraeii/Browser](https://github.com/Muhammad-Noraeii/Advance-Browser)
-- ردیاب مشکلات: [https://github.com/Muhammad-Noraeii/Advanced-Browser/issues](https://github.com/Muhammad-Noraeii/Advance-Browserissues)
+- مخزن گیت‌هاب: [کلیک کنید](https://github.com/Muhammad-Noraeii/Advance-Browser)
+- ردیاب مشکلات: [کلیک کنید](https://github.com/Muhammad-Noraeii/Advance-Browserissues)
