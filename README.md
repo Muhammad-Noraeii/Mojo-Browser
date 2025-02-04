@@ -1,6 +1,8 @@
 [برای مشاهده نسخه ی فارسی کلیک کنید.](readme-fa.md)
 
 # Screenshots
+<img width="505" alt="Setting" src="https://github.com/user-attachments/assets/090f91a3-dd39-40c6-a6f3-c27316904b0c" />
+<img width="511" alt="Main" src="https://github.com/user-attachments/assets/7a7fb51d-0f8f-4389-ae5b-f53ccd4b21b6" />
 
 
 # Mojo Browser - v0.1 Alpha
