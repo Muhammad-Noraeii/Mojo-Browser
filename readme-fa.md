@@ -55,7 +55,7 @@ pip install PyQt5 PyQtWebEngine
 1. مخزن را به دستگاه محلی خود کلون کنید:
 
    ```bash
-   git clone https://github.com/Muhammad-Noraeii/Browser.git
+   git clone https://github.com/Muhammad-Noraeii/Advanced-Browser.git
    cd Browser
    ```
 
@@ -149,11 +149,11 @@ pip install PyQt5 PyQtWebEngine
 
 ## تماس
 
-برای مشکلات یا درخواست‌های ویژگی، لطفاً یک مشکل در [مخزن گیت‌هاب](https://github.com/Muhammad-Noraeii/Browser) باز کنید. همچنین می‌توانید با نگهدارندگان پروژه از طریق ایمیل [ایمیل بزنید!](mailto:Muhammad.Noraeii@gmail.com تماس بگیرید.
+برای مشکلات یا درخواست‌های ویژگی، لطفاً یک مشکل در [مخزن گیت‌هاب](https://github.com/Muhammad-Noraeii/Advanced-Browser) باز کنید. همچنین می‌توانید با نگهدارندگان پروژه از طریق ایمیل [ایمیل بزنید!](mailto:Muhammad.Noraeii@gmail.com تماس بگیرید.
 
 ---
 
 ### لینک‌های توسعه‌دهنده:
 
-- مخزن گیت‌هاب: [https://github.com/Muhammad-Noraeii/Browser](https://github.com/Muhammad-Noraeii/Browser)
-- ردیاب مشکلات: [https://github.com/Muhammad-Noraeii/Browser/issues](https://github.com/Muhammad-Noraeii/Browser/issues)
+- مخزن گیت‌هاب: [https://github.com/Muhammad-Noraeii/Browser](https://github.com/Muhammad-Noraeii/Advanced-Browser)
+- ردیاب مشکلات: [https://github.com/Muhammad-Noraeii/Advanced-Browser/issues](hhttps://github.com/Muhammad-Noraeii/Advanced-Browserissues)
