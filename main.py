@@ -236,6 +236,9 @@ class MojoBrowser(QMainWindow):
         self.reload_button = QPushButton("Reload")
         self.reload_button.clicked.connect(self.browser_reload)
 
+        self.new_tab_button = QPushButton("New Tab")
+        self.new_tab_button.clicked.connect(self.add_new_tab)
+
         self.settings_button = QPushButton("Settings")
         self.settings_button.clicked.connect(self.open_settings)
 
@@ -264,27 +267,51 @@ class MojoBrowser(QMainWindow):
         self.nav_bar.addWidget(self.view_bookmarks_button)
         self.nav_bar.addWidget(self.history_button)
         self.nav_bar.addWidget(self.settings_button)
+        self.nav_bar.addWidget(self.new_tab_button)
 
-        self.browser = QWebEngineView()
-
-        self.download_handler = DownloadHandler(self.browser)
+        self.tabs = QTabWidget()
+        self.tabs.setTabsClosable(True)
+        self.tabs.tabCloseRequested.connect(self.close_tab)
+        self.tabs.currentChanged.connect(self.update_address_bar)
 
         self.layout.addLayout(self.nav_bar)
-        self.layout.addWidget(self.browser)
+        self.layout.addWidget(self.tabs)
 
-        # Load default HTML page
-        self.browser.setUrl(QUrl.fromLocalFile(os.path.abspath("default_page.html")))
-        self.browser.urlChanged.connect(self.update_history)
+        self.add_new_tab()
 
         self.apply_styles()
 
+    def add_new_tab(self, url=None):
+        browser = QWebEngineView()
+        if url:
+            browser.setUrl(QUrl(url))
+        else:
+            browser.setUrl(QUrl("https://www.google.com"))
+        i = self.tabs.addTab(browser, "New Tab")
+        self.tabs.setCurrentIndex(i)
+        browser.urlChanged.connect(lambda url, browser=browser: self.update_tab_title(browser, url))
+
+    def close_tab(self, index):
+        if self.tabs.count() > 1:
+            self.tabs.removeTab(index)
+
+    def update_tab_title(self, browser, url):
+        i = self.tabs.indexOf(browser)
+        self.tabs.setTabText(i, browser.page().title())
+
+    def update_address_bar(self, index):
+        browser = self.tabs.widget(index)
+        url = browser.url().toString()
+        self.address_bar.setText(url)
+
     def load_page(self):
         url = self.address_bar.text().strip()
+        browser = self.tabs.currentWidget()
         if re.match(r'^(http://|https://)', url) or re.search(r'\.\w{2,}', url):
-            self.browser.setUrl(QUrl(url if url.startswith(('http://', 'https://')) else f"http://{url}"))
+            browser.setUrl(QUrl(url if url.startswith(('http://', 'https://')) else f"http://{url}"))
         else:
             search_url = self.get_search_url(url)
-            self.browser.setUrl(QUrl(search_url))
+            browser.setUrl(QUrl(search_url))
 
     def get_search_url(self, query):
         search_engines = {
@@ -296,15 +323,18 @@ class MojoBrowser(QMainWindow):
         return search_engines.get(self.search_engine, search_engines["Google"])
 
     def browser_back(self):
-        if self.browser.history().canGoBack():
-            self.browser.back()
+        browser = self.tabs.currentWidget()
+        if browser.history().canGoBack():
+            browser.back()
 
     def browser_forward(self):
-        if self.browser.history().canGoForward():
-            self.browser.forward()
+        browser = self.tabs.currentWidget()
+        if browser.history().canGoForward():
+            browser.forward()
 
     def browser_reload(self):
-        self.browser.reload()
+        browser = self.tabs.currentWidget()
+        browser.reload()
 
     def open_settings(self):
         dialog = SettingsDialog(self)
@@ -370,7 +400,8 @@ class MojoBrowser(QMainWindow):
             json.dump(self.bookmarks, file)
 
     def add_bookmark(self):
-        current_url = self.browser.url().toString()
+        browser = self.tabs.currentWidget()
+        current_url = browser.url().toString()
         if current_url not in self.bookmarks:
             self.bookmarks.append(current_url)
             self.save_bookmarks()
@@ -396,7 +427,8 @@ class MojoBrowser(QMainWindow):
         dialog.exec_()
 
     def load_bookmarked_page(self, url):
-        self.browser.setUrl(QUrl(url))
+        browser = self.tabs.currentWidget()
+        browser.setUrl(QUrl(url))
 
     def load_history(self):
         if os.path.exists(self.history_file):
@@ -436,7 +468,8 @@ class MojoBrowser(QMainWindow):
         dialog.exec_()
 
     def load_history_page(self, url):
-        self.browser.setUrl(QUrl(url))
+        browser = self.tabs.currentWidget()
+        browser.setUrl(QUrl(url))
 
     def clear_history(self):
         self.history = []
@@ -477,7 +510,7 @@ class MojoBrowser(QMainWindow):
             """)
         elif self.theme == "Light":
             self.setStyleSheet("""
-                QMainWindow {
+QMainWindow {
                     background-color: #ffffff;
                 }
                 QLineEdit {
