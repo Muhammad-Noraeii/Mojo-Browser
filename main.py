@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile
 from PyQt5.QtCore import QUrl
 
+
 class DownloadHandler:
     def __init__(self, browser):
         self.browser = browser
@@ -24,9 +25,7 @@ class DownloadHandler:
         if save_path:
             download_item.setPath(save_path)
             download_item.accept()
-
             QMessageBox.information(None, "Download Started", f"Downloading: {download_item.url().toString()}")
-
             download_item.downloadProgress.connect(self.show_download_progress)
             download_item.finished.connect(lambda: self.download_finished(save_path))
 
@@ -38,12 +37,16 @@ class DownloadHandler:
     def download_finished(self, save_path):
         QMessageBox.information(None, "Download Complete", f"File downloaded to: {save_path}")
 
+
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setGeometry(300, 300, 500, 600)
+        self.init_ui()
+        self.update_cache_size()
 
+    def init_ui(self):
         # Tab widget for settings
         self.tabs = QTabWidget()
         self.general_tab = QWidget()
@@ -57,7 +60,6 @@ class SettingsDialog(QDialog):
         self.tabs.addTab(self.data_management_tab, "Data Management")
         self.tabs.addTab(self.about_tab, "About Us")
 
-        # Set up tabs
         self.setup_general_tab()
         self.setup_security_tab()
         self.setup_data_management_tab()
@@ -72,9 +74,6 @@ class SettingsDialog(QDialog):
         self.layout.addWidget(self.tabs)
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
-
-        # Update cache size
-        self.update_cache_size()
 
     def setup_general_tab(self):
         self.general_layout = QFormLayout()
@@ -168,19 +167,19 @@ class SettingsDialog(QDialog):
         profile = self.parent().browser.page().profile()
         profile.clearHttpCache()
         profile.clearAllVisitedLinks()
-        print("Cookies cleared!")
+        QMessageBox.information(self, "Cookies Cleared", "Cookies have been cleared.")
 
     def clear_cache(self):
         profile = QWebEngineProfile.defaultProfile()
         profile.clearHttpCache()
         self.update_cache_size()
-        print("Cache cleared!")
+        QMessageBox.information(self, "Cache Cleared", "Cache has been cleared.")
 
     def clear_history(self):
         profile = self.parent().browser.page().profile()
         profile.clearAllVisitedLinks()
         self.parent().clear_history_data()
-        print("History cleared!")
+        QMessageBox.information(self, "History Cleared", "Browsing history has been cleared.")
 
     def save_settings(self):
         home_page = self.home_page_input.text()
@@ -194,15 +193,30 @@ class SettingsDialog(QDialog):
         )
         self.accept()
 
+
 class MojoBrowser(QMainWindow):
+    SETTINGS_FILE = "settings.json"
+    BOOKMARKS_FILE = "bookmarks.json"
+    HISTORY_FILE = "history.json"
+    DEFAULT_HOME_PAGE = "https://www.google.com"
+    DEFAULT_SEARCH_ENGINE = "Google"
+    DEFAULT_THEME = "Dark"
+    SEARCH_ENGINES = {
+        "Google": "https://www.google.com/search?q={}",
+        "Bing": "https://www.bing.com/search?q={}",
+        "DuckDuckGo": "https://duckduckgo.com/?q={}",
+        "Yahoo": "https://search.yahoo.com/search?p={}"
+    }
+
+    class Theme:
+        DARK = "Dark"
+        LIGHT = "Light"
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Mojo Browser")
         self.setGeometry(100, 100, 1024, 768)
 
-        self.settings_file = "settings.json"
-        self.bookmarks_file = "bookmarks.json"
-        self.history_file = "history.json"
         self.load_settings()
         self.load_bookmarks()
         self.load_history()
@@ -213,6 +227,14 @@ class MojoBrowser(QMainWindow):
         self.layout = QVBoxLayout()
         self.central_widget.setLayout(self.layout)
 
+        self.init_ui()
+
+        self.browser.setUrl(QUrl.fromLocalFile(os.path.abspath("default_page.html")))
+        self.browser.urlChanged.connect(self.update_history)
+
+        self.apply_styles()
+
+    def init_ui(self):
         self.nav_bar = QHBoxLayout()
 
         self.back_button = QPushButton("Back")
@@ -254,34 +276,18 @@ class MojoBrowser(QMainWindow):
         self.nav_bar.addWidget(self.settings_button)
 
         self.browser = QWebEngineView()
-
         self.download_handler = DownloadHandler(self.browser)
 
         self.layout.addLayout(self.nav_bar)
         self.layout.addWidget(self.browser)
-
-        # Load default HTML page
-        self.browser.setUrl(QUrl.fromLocalFile(os.path.abspath("default_page.html")))
-        self.browser.urlChanged.connect(self.update_history)
-
-        self.apply_styles()
 
     def load_page(self):
         url = self.address_bar.text().strip()
         if re.match(r'^(http://|https://)', url) or re.search(r'\.\w{2,}', url):
             self.browser.setUrl(QUrl(url if url.startswith(('http://', 'https://')) else f"http://{url}"))
         else:
-            search_url = self.get_search_url(url)
+            search_url = self.SEARCH_ENGINES[self.search_engine].format(url.replace(' ', '+'))
             self.browser.setUrl(QUrl(search_url))
-
-    def get_search_url(self, query):
-        search_engines = {
-            "Google": f"https://www.google.com/search?q={query.replace(' ', '+')}",
-            "Bing": f"https://www.bing.com/search?q={query.replace(' ', '+')}",
-            "DuckDuckGo": f"https://duckduckgo.com/?q={query.replace(' ', '+')}",
-            "Yahoo": f"https://search.yahoo.com/search?p={query.replace(' ', '+')}"
-        }
-        return search_engines.get(self.search_engine, search_engines["Google"])
 
     def browser_back(self):
         if self.browser.history().canGoBack():
@@ -317,19 +323,19 @@ class MojoBrowser(QMainWindow):
         self.save_settings()
 
     def load_settings(self):
-        if os.path.exists(self.settings_file):
-            with open(self.settings_file, "r") as file:
+        try:
+            with open(self.SETTINGS_FILE, "r") as file:
                 settings = json.load(file)
-                self.home_page = settings.get("home_page", "https://www.google.com")
-                self.search_engine = settings.get("search_engine", "Google")
-                self.theme = settings.get("theme", "Dark")
+                self.home_page = settings.get("home_page", self.DEFAULT_HOME_PAGE)
+                self.search_engine = settings.get("search_engine", self.DEFAULT_SEARCH_ENGINE)
+                self.theme = settings.get("theme", self.DEFAULT_THEME)
                 self.javascript_enabled = settings.get("javascript_enabled", True)
                 self.block_popups = settings.get("block_popups", True)
                 self.block_mixed_content = settings.get("block_mixed_content", True)
-        else:
-            self.home_page = "https://www.google.com"
-            self.search_engine = "Google"
-            self.theme = "Dark"
+        except (FileNotFoundError, json.JSONDecodeError):
+            self.home_page = self.DEFAULT_HOME_PAGE
+            self.search_engine = self.DEFAULT_SEARCH_ENGINE
+            self.theme = self.DEFAULT_THEME
             self.javascript_enabled = True
             self.block_popups = True
             self.block_mixed_content = True
@@ -343,18 +349,18 @@ class MojoBrowser(QMainWindow):
             "block_popups": self.block_popups,
             "block_mixed_content": self.block_mixed_content
         }
-        with open(self.settings_file, "w") as file:
+        with open(self.SETTINGS_FILE, "w") as file:
             json.dump(settings, file)
 
     def load_bookmarks(self):
-        if os.path.exists(self.bookmarks_file):
-            with open(self.bookmarks_file, "r") as file:
+        try:
+            with open(self.BOOKMARKS_FILE, "r") as file:
                 self.bookmarks = json.load(file)
-        else:
+        except (FileNotFoundError, json.JSONDecodeError):
             self.bookmarks = []
 
     def save_bookmarks(self):
-        with open(self.bookmarks_file, "w") as file:
+        with open(self.BOOKMARKS_FILE, "w") as file:
             json.dump(self.bookmarks, file)
 
     def add_bookmark(self):
@@ -387,14 +393,14 @@ class MojoBrowser(QMainWindow):
         self.browser.setUrl(QUrl(url))
 
     def load_history(self):
-        if os.path.exists(self.history_file):
-            with open(self.history_file, "r") as file:
+        try:
+            with open(self.HISTORY_FILE, "r") as file:
                 self.history = json.load(file)
-        else:
+        except (FileNotFoundError, json.JSONDecodeError):
             self.history = []
 
     def save_history(self):
-        with open(self.history_file, "w") as file:
+        with open(self.HISTORY_FILE, "w") as file:
             json.dump(self.history, file)
 
     def update_history(self, url):
@@ -437,7 +443,7 @@ class MojoBrowser(QMainWindow):
         QMessageBox.information(self, "History Cleared", "Browsing history has been cleared.")
 
     def apply_styles(self):
-        if self.theme == "Dark":
+        if self.theme == self.Theme.DARK:
             self.setStyleSheet("""
                 QMainWindow {
                     background-color: #1e1e1e;
@@ -463,7 +469,7 @@ class MojoBrowser(QMainWindow):
                     background-color: #333;
                 }
             """)
-        elif self.theme == "Light":
+        elif self.theme == self.Theme.LIGHT:
             self.setStyleSheet("""
                 QMainWindow {
                     background-color: #ffffff;
@@ -489,6 +495,7 @@ class MojoBrowser(QMainWindow):
                     background-color: #c0c0c0;
                 }
             """)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
