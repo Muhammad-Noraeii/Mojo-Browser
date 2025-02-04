@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Mojo Browser</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f8f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      text-align: center;
+      background-color: #ffffff;
+      padding: 20px;
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 600px;
+    }
+    h1 {
+      color: #333;
+      font-size: 36px;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 30px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      outline: none;
+      transition: 0.3s ease-in-out;
+    }
+    input[type="text"]:focus {
+      border-color: #4e73df;
+      box-shadow: 0 0 5px rgba(78, 115, 223, 0.5);
+    }
+    input[type="submit"] {
+      background-color: #4e73df;
+      color: white;
+      padding: 10px 30px;
+      font-size: 16px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    input[type="submit"]:hover {
+      background-color: #2e59d9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mojo Browser</h1>
+    <form action="https://www.google.com/search" method="get">
+      <input type="text" name="q" placeholder="Search Google..." aria-label="Search Google">
+      <br>
+      <input type="submit" value="Search">
+    </form>
+  </div>
+</body>
+</html>
