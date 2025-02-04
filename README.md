@@ -1,5 +1,5 @@
 
-# Mojo Browser ![Version](https://img.shields.io/badge/version-0.1--alpha-blue) ![Python](https://img.shields.io/badge/Python-3.x-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+# Mojo Browser ![Version](https://img.shields.io/badge/version-0.1.2--final-blue) ![Python](https://img.shields.io/badge/Python-3.x-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 Welcome to **Mojo Browser**, a powerful and customizable web browser built using PyQt5 and Python. Mojo Browser offers a range of features to enhance your browsing experience, including advanced security settings, data management tools, and a sleek user interface.
 
