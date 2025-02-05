@@ -96,3 +96,7 @@ For more information, visit our GitHub repository or contact us at:
 - [GitHub: Guguss-31](https://github.com/Guguss-31)
 
 Thank you for using Mojo Browser! We hope you enjoy the features and flexibility it offers.
+
+# Happy 50 Clones!
+## Thanks everybody for cloning Mojo Browser!
+<img width="518" alt="Capture" src="https://github.com/user-attachments/assets/b8c82483-1747-4b29-82e6-e75a7ff6fcbf" />
