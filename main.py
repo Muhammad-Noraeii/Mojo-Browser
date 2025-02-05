@@ -277,7 +277,7 @@ class MojoBrowser(QMainWindow):
         self.layout.addLayout(self.nav_bar)
         self.layout.addWidget(self.tabs)
 
-        self.add_new_tab(QUrl.fromLocalFile(os.path.abspath("default_page.html")))  # Load default_page.html in the home tab
+        self.add_new_tab(QUrl.fromLocalFile(os.path.abspath("datas/default_page.html")))  # Load default_page.html in the home tab
 
         self.apply_styles()
 
@@ -341,7 +341,7 @@ class MojoBrowser(QMainWindow):
         if url:
             browser.setUrl(url)
         else:
-            browser.setUrl(QUrl.fromLocalFile(os.path.abspath("default_page.html")))
+            browser.setUrl(QUrl.fromLocalFile(os.path.abspath("datas/default_page.html")))
         i = self.tabs.addTab(browser, "New Tab")
         self.tabs.setCurrentIndex(i)
         browser.urlChanged.connect(lambda url, browser=browser: self.update_tab_title(browser, url))
