@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Mojo Browser</title>
+  <link rel="icon" type="image/png" href="browser.png">
   <style>
     * {
       margin: 0;
@@ -30,6 +31,12 @@
       max-width: 500px;
       width: 100%;
       text-align: center;
+    }
+
+    .logo {
+      width: 80px; 
+      height: 80px;
+      margin-bottom: 15px;
     }
 
     h1 {
@@ -85,6 +92,7 @@
 </head>
 <body>
   <div class="container">
+    <img src="browser.png" alt="Mojo Browser Logo" class="logo">
     <h1>Mojo Browser</h1>
     <form action="https://www.google.com/search" method="get">
       <input type="text" name="q" placeholder="Search all the Internet with Mojo Browser!" aria-label="Search Google">
