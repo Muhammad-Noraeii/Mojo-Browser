@@ -33,11 +33,16 @@
       text-align: center;
     }
 
-    .logo {
-      width: 80px; 
-      height: 80px;
-      margin-bottom: 15px;
-    }
+	  .logo {
+	    background-color: #000000;
+	    border-color: #000000;
+	    border: rgb(0, 0, 0) 1em solid;
+	    border-radius: 21px;
+	    max-width: 250px;
+	    width: 100%;
+	    max-height: 250px;
+	    height: 100%;
+	  }
 
     h1 {
       color: #333;
@@ -92,7 +97,7 @@
 </head>
 <body>
   <div class="container">
-    <img src="browser.png" alt="Mojo Browser Logo" class="logo">
+    <img class="logo" alt="Mojo-Browser logo" src="browser.png">
     <h1>Mojo Browser</h1>
     <form action="https://www.google.com/search" method="get">
       <input type="text" name="q" placeholder="Search all the Internet with Mojo Browser!" aria-label="Search Google">
