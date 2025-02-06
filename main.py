@@ -268,7 +268,9 @@ class MojoBrowser(QMainWindow):
         self.nav_bar.addWidget(self.history_button)
         self.nav_bar.addWidget(self.settings_button)
         self.nav_bar.addWidget(self.new_tab_button)
-
+        self.browser = QWebEngineView()
+        self.download_handler = DownloadHandler(self.browser)
+        
         self.tabs = QTabWidget()
         self.tabs.setTabsClosable(True)
         self.tabs.tabCloseRequested.connect(self.close_tab)
