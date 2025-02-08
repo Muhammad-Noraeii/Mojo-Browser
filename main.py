@@ -5,10 +5,12 @@ import re
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QLineEdit,
     QPushButton, QHBoxLayout, QLabel, QComboBox, QDialog, QFormLayout, QTabWidget, QTextEdit, QCheckBox,
-    QFileDialog, QMessageBox, QListWidget, QListWidgetItem, QProgressDialog
+    QFileDialog, QMessageBox, QListWidget, QListWidgetItem, QProgressDialog, QToolBar, QStatusBar,
+    QAction, QStyle, QSizePolicy
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile
-from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtCore import QUrl, Qt, QSize
+from PyQt5.QtGui import QIcon
 
 class DownloadHandler:
     def __init__(self, browser):
@@ -225,118 +227,215 @@ class MojoBrowser(QMainWindow):
         self.layout = QVBoxLayout()
         self.central_widget.setLayout(self.layout)
 
-        self.nav_bar = QHBoxLayout()
+        self.create_tool_bar()
 
-        self.back_button = QPushButton("Back")
-        self.back_button.clicked.connect(self.browser_back)
-
-        self.forward_button = QPushButton("Forward")
-        self.forward_button.clicked.connect(self.browser_forward)
-
-        self.reload_button = QPushButton("Reload")
-        self.reload_button.clicked.connect(self.browser_reload)
-
-        self.new_tab_button = QPushButton("New Tab")
-        self.new_tab_button.clicked.connect(self.add_new_tab)
-
-        self.settings_button = QPushButton("Settings")
-        self.settings_button.clicked.connect(self.open_settings)
-
-        self.bookmark_button = QPushButton("Bookmark")
-        self.bookmark_button.clicked.connect(self.add_bookmark)
-
-        self.view_bookmarks_button = QPushButton("View Bookmarks")
-        self.view_bookmarks_button.clicked.connect(self.view_bookmarks)
-
-        self.history_button = QPushButton("History")
-        self.history_button.clicked.connect(self.view_history)
-
-        self.address_bar = QLineEdit()
-        self.address_bar.setPlaceholderText("Enter URL or search term...")
-        self.address_bar.returnPressed.connect(self.load_page)
-
-        self.go_button = QPushButton("Go")
-        self.go_button.clicked.connect(self.load_page)
-
-        self.nav_bar.addWidget(self.back_button)
-        self.nav_bar.addWidget(self.forward_button)
-        self.nav_bar.addWidget(self.reload_button)
-        self.nav_bar.addWidget(self.address_bar)
-        self.nav_bar.addWidget(self.go_button)
-        self.nav_bar.addWidget(self.bookmark_button)
-        self.nav_bar.addWidget(self.view_bookmarks_button)
-        self.nav_bar.addWidget(self.history_button)
-        self.nav_bar.addWidget(self.settings_button)
-        self.nav_bar.addWidget(self.new_tab_button)
-        self.browser = QWebEngineView()
-        self.download_handler = DownloadHandler(self.browser)
-        
         self.tabs = QTabWidget()
         self.tabs.setTabsClosable(True)
         self.tabs.tabCloseRequested.connect(self.close_tab)
         self.tabs.currentChanged.connect(self.update_address_bar)
 
-        self.layout.addLayout(self.nav_bar)
         self.layout.addWidget(self.tabs)
 
         self.add_new_tab(QUrl.fromLocalFile(os.path.abspath("datas/default_page.html")))  # Load default_page.html in the home tab
 
         self.apply_styles()
 
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+    def create_tool_bar(self):
+        self.tool_bar = QToolBar("Navigation")
+        self.addToolBar(self.tool_bar)
+        self.tool_bar.setIconSize(QSize(24, 24))
+
+        # Back button
+        self.back_button = QAction(QIcon.fromTheme("go-previous"), "Back", self)
+        self.back_button.setStatusTip("Go to the previous page")
+        self.back_button.triggered.connect(self.browser_back)
+        self.tool_bar.addAction(self.back_button)
+
+        # Forward button
+        self.forward_button = QAction(QIcon.fromTheme("go-next"), "Forward", self)
+        self.forward_button.setStatusTip("Go to the next page")
+        self.forward_button.triggered.connect(self.browser_forward)
+        self.tool_bar.addAction(self.forward_button)
+
+        # Reload button
+        self.reload_button = QAction(QIcon.fromTheme("view-refresh"), "Reload", self)
+        self.reload_button.setStatusTip("Reload the current page")
+        self.reload_button.triggered.connect(self.browser_reload)
+        self.tool_bar.addAction(self.reload_button)
+
+        # Home button
+        self.home_button = QAction(QIcon.fromTheme("go-home"), "Home", self)
+        self.home_button.setStatusTip("Go to the homepage")
+        self.home_button.triggered.connect(self.go_home)
+        self.tool_bar.addAction(self.home_button)
+
+        # Address bar
+        self.address_bar = QLineEdit()
+        self.address_bar.returnPressed.connect(self.load_page)
+        self.tool_bar.addWidget(self.address_bar)
+
+        # Go button
+        self.go_button = QAction(QIcon.fromTheme("go-jump"), "Go", self)
+        self.go_button.setStatusTip("Go to the entered address")
+        self.go_button.triggered.connect(self.load_page)
+        self.tool_bar.addAction(self.go_button)
+
+        # Spacer
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.tool_bar.addWidget(spacer)
+
+        # New tab button
+        self.new_tab_button = QAction(QIcon.fromTheme("document-new"), "New Tab", self)
+        self.new_tab_button.setStatusTip("Open a new tab")
+        self.new_tab_button.triggered.connect(self.add_new_tab)
+        self.tool_bar.addAction(self.new_tab_button)
+
+        # Bookmark button
+        self.bookmark_button = QAction(QIcon.fromTheme("emblem-favorite"), "Bookmark", self)
+        self.bookmark_button.setStatusTip("Bookmark this page")
+        self.bookmark_button.triggered.connect(self.add_bookmark)
+        self.tool_bar.addAction(self.bookmark_button)
+
+        # View bookmarks button
+        self.view_bookmarks_button = QAction(QIcon.fromTheme("bookmarks"), "View Bookmarks", self)
+        self.view_bookmarks_button.setStatusTip("View your bookmarks")
+        self.view_bookmarks_button.triggered.connect(self.view_bookmarks)
+        self.tool_bar.addAction(self.view_bookmarks_button)
+
+        # History button
+        self.history_button = QAction(QIcon.fromTheme("document-open-recent"), "History", self)
+        self.history_button.setStatusTip("View your browsing history")
+        self.history_button.triggered.connect(self.view_history)
+        self.tool_bar.addAction(self.history_button)
+
+        # Settings button
+        self.settings_button = QAction(QIcon.fromTheme("preferences-system"), "Settings", self)
+        self.settings_button.setStatusTip("Open the settings dialog")
+        self.settings_button.triggered.connect(self.open_settings)
+        self.tool_bar.addAction(self.settings_button)
+
     def apply_styles(self):
         if self.theme == "Dark":
-            self.setStyleSheet("""
+            style = """
                 QMainWindow {
                     background-color: #1e1e1e;
+                    color: #ffffff;
+                }
+                QToolBar {
+                    background-color: #2c2c2c;
+                    border: none;
+                }
+                QToolBar::handle {
+                    background: transparent;
+                    border: none;
                 }
                 QLineEdit {
-                    background-color: #2c2c2c;
+                    background-color: #3a3a3a;
                     color: #ffffff;
                     border: 1px solid #444;
-                    border-radius: 5px;
-                    padding: 6px;
+                    border-radius: 3px;
+                    padding: 4px;
                 }
-                QPushButton {
+                QPushButton, QAction {
                     background-color: #444;
                     color: #ffffff;
                     border: 1px solid #555;
-                    border-radius: 5px;
-                    padding: 6px 12px;
+                    border-radius: 3px;
+                    padding: 4px 8px;
+                    min-width: 50px;
                 }
-                QPushButton:hover {
+                QPushButton:hover, QAction:hover {
                     background-color: #555;
                 }
-                QPushButton:pressed {
+                QPushButton:pressed, QAction:pressed {
                     background-color: #333;
                 }
-            """)
+                QTabWidget::pane {
+                    border: none;
+                }
+                QTabBar::tab {
+                    background: #2c2c2c;
+                    color: #ffffff;
+                    border: 1px solid #444;
+                    border-bottom: none;
+                    padding: 4px 12px;
+                }
+                QTabBar::tab:selected {
+                    background: #1e1e1e;
+                }
+                QTabBar::tab:!selected {
+                    margin-top: 2px;
+                }
+                QStatusBar {
+                    background-color: #2c2c2c;
+                    color: #ffffff;
+                    border: none;
+                }
+            """
         elif self.theme == "Light":
-            self.setStyleSheet("""
+            style = """
                 QMainWindow {
                     background-color: #ffffff;
+                    color: #000000;
+                }
+                 QToolBar {
+                    background-color: #f0f0f0;
+                    border: none;
+                }
+                QToolBar::handle {
+                    background: transparent;
+                    border: none;
                 }
                 QLineEdit {
                     background-color: #f0f0f0;
                     color: #000000;
                     border: 1px solid #ccc;
-                    border-radius: 5px;
-                    padding: 6px;
+                    border-radius: 3px;
+                    padding: 4px;
                 }
-                QPushButton {
+                QPushButton, QAction {
                     background-color: #e0e0e0;
                     color: #000000;
                     border: 1px solid #bbb;
-                    border-radius: 5px;
-                    padding: 6px 12px;
+                    border-radius: 3px;
+                    padding: 4px 8px;
+                    min-width: 50px;
                 }
-                QPushButton:hover {
+                QPushButton:hover, QAction:hover {
                     background-color: #d0d0d0;
                 }
-                QPushButton:pressed {
+                QPushButton:pressed, QAction:pressed {
                     background-color: #c0c0c0;
                 }
-            """)
-
+                QTabWidget::pane {
+                    border: none;
+                }
+                QTabBar::tab {
+                    background: #e0e0e0;
+                    color: #000000;
+                    border: 1px solid #bbb;
+                    border-bottom: none;
+                    padding: 4px 12px;
+                }
+                QTabBar::tab:selected {
+                    background: #ffffff;
+                }
+                 QTabBar::tab:!selected {
+                    margin-top: 2px;
+                }
+                QStatusBar {
+                    background-color: #f0f0f0;
+                    color: #000000;
+                    border: none;
+                }
+            """
+        else:
+            style = ""
+        self.setStyleSheet(style)
 
     def add_new_tab(self, url=None):
         browser = QWebEngineView()
@@ -350,6 +449,9 @@ class MojoBrowser(QMainWindow):
         browser.urlChanged.connect(lambda url, browser=browser: self.update_tab_title(browser, url))
         browser.urlChanged.connect(self.update_history)
         browser.urlChanged.connect(lambda url, browser=browser: self.update_address_bar(self.tabs.currentIndex()))
+        browser.loadStarted.connect(self.show_loading)
+        browser.loadFinished.connect(self.hide_loading)
+        self.download_handler = DownloadHandler(browser)
 
     def close_tab(self, index):
         if self.tabs.count() > 1:
@@ -396,6 +498,10 @@ class MojoBrowser(QMainWindow):
     def browser_reload(self):
         browser = self.tabs.currentWidget()
         browser.reload()
+
+    def go_home(self):
+        browser = self.tabs.currentWidget()
+        browser.setUrl(QUrl(self.home_page))
 
     def open_settings(self):
         dialog = SettingsDialog(self)
@@ -554,62 +660,15 @@ class MojoBrowser(QMainWindow):
         self.save_history()
         QMessageBox.information(self, "History Cleared", "Browsing history has been cleared.")
 
-def apply_styles(self):
-        if self.theme == "Dark":
-            self.setStyleSheet("""
-                QMainWindow {
-                    background-color: #1e1e1e;
-                }
-                QLineEdit {
-                    background-color: #2c2c2c;
-                    color: #ffffff;
-                    border: 1px solid #444;
-                    border-radius: 5px;
-                    padding: 6px;
-                }
-                QPushButton {
-                    background-color: #444;
-                    color: #ffffff;
-                    border: 1px solid #555;
-                    border-radius: 5px;
-                    padding: 6px 12px;
-                }
-                QPushButton:hover {
-                    background-color: #555;
-                }
-                QPushButton:pressed {
-                    background-color: #333;
-                }
-            """)
-        elif self.theme == "Light":
-            self.setStyleSheet("""
-                QMainWindow {
-                    background-color: #ffffff;
-                }
-                QLineEdit {
-                    background-color: #f0f0f0;
-                    color: #000000;
-                    border: 1px solid #ccc;
-                    border-radius: 5px;
-                    padding: 6px;
-                }
-                QPushButton {
-                    background-color: #e0e0e0;
-                    color: #000000;
-                    border: 1px solid #bbb;
-                    border-radius: 5px;
-                    padding: 6px 12px;
-                }
-                QPushButton:hover {
-                    background-color: #d0d0d0;
-                }
-                QPushButton:pressed {
-                    background-color: #c0c0c0;
-                }
-            """)
+    def show_loading(self):
+        self.status_bar.showMessage("Loading...")
+
+    def hide_loading(self):
+        self.status_bar.clearMessage()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")  # Set a modern style
     browser = MojoBrowser()
     browser.show()
     sys.exit(app.exec_())
