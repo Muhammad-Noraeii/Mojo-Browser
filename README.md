@@ -4,7 +4,6 @@
 
 # Mojo Browser ![Version](https://img.shields.io/badge/version-0.1.5.1--final-blue) ![Python](https://img.shields.io/badge/Python-3.x-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-# Mojo Browser
 
 ## Overview
 
@@ -81,7 +80,6 @@ We are constantly working to improve Mojo Browser and add new features. Here's a
 -   **Synchronization:** Sync your settings, bookmarks, and history across multiple devices.
 -   **Improved Performance:** Further optimizations to enhance browsing speed and efficiency.
 -   **Advanced Privacy Features:** Enhanced tracking protection and privacy controls.
--   **Virtual Reality Support:** Immersive browsing experience in virtual reality environments.
 
 Stay tuned for future updates and exciting new features!
-```
+
