@@ -31,7 +31,7 @@ class DownloadHandler:
             self.progress_dialog = QProgressDialog("Downloading...", "Cancel", 0, 100)
             self.progress_dialog.setWindowTitle("Download Progress")
             self.progress_dialog.setWindowModality(Qt.WindowModal)
-            self.progress_dialog.canceled.connect(lambda: download_item.cancel())
+            self.progress_dialog.canceled.connect(download_item.cancel)
 
             download_item.downloadProgress.connect(self.show_download_progress)
             download_item.finished.connect(lambda: self.download_finished(save_path))
@@ -209,6 +209,8 @@ class SettingsDialog(QDialog):
         self.accept()
 
 class MojoBrowser(QMainWindow):
+    DEFAULT_HOME_PAGE = "https://search.mojox.org"  # Changed home page
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Mojo Browser")
@@ -236,7 +238,7 @@ class MojoBrowser(QMainWindow):
 
         self.layout.addWidget(self.tabs)
 
-        self.add_new_tab(QUrl.fromLocalFile(os.path.abspath("datas/default_page.html")))  # Load default_page.html in the home tab
+        self.add_new_tab(QUrl(self.DEFAULT_HOME_PAGE))  # Load default_page.html in the home tab
 
         self.apply_styles()
 
@@ -319,8 +321,9 @@ class MojoBrowser(QMainWindow):
         self.tool_bar.addAction(self.settings_button)
 
     def apply_styles(self):
-        if self.theme == "Dark":
-            style = """
+        # Define styles dictionary for better readability
+        styles = {
+            "Dark": """
                 QMainWindow {
                     background-color: #1e1e1e;
                     color: #ffffff;
@@ -375,9 +378,8 @@ class MojoBrowser(QMainWindow):
                     color: #ffffff;
                     border: none;
                 }
-            """
-        elif self.theme == "Light":
-            style = """
+            """,
+            "Light": """
                 QMainWindow {
                     background-color: #ffffff;
                     color: #000000;
@@ -433,8 +435,8 @@ class MojoBrowser(QMainWindow):
                     border: none;
                 }
             """
-        else:
-            style = ""
+        }
+        style = styles.get(self.theme, "")
         self.setStyleSheet(style)
 
     def add_new_tab(self, url=None):
@@ -443,7 +445,7 @@ class MojoBrowser(QMainWindow):
         if url:
             browser.setUrl(url)
         else:
-            browser.setUrl(QUrl.fromLocalFile(os.path.abspath("datas/default_page.html")))
+            browser.setUrl(QUrl(self.DEFAULT_HOME_PAGE))
         i = self.tabs.addTab(browser, "New Tab")
         self.tabs.setCurrentIndex(i)
         browser.urlChanged.connect(lambda url, browser=browser: self.update_tab_title(browser, url))
@@ -541,14 +543,14 @@ class MojoBrowser(QMainWindow):
         if os.path.exists(self.settings_file):
             with open(self.settings_file, "r") as file:
                 settings = json.load(file)
-                self.home_page = settings.get("home_page", "https://www.google.com")
+                self.home_page = settings.get("home_page", self.DEFAULT_HOME_PAGE)
                 self.search_engine = settings.get("search_engine", "Google")
                 self.theme = settings.get("theme", "Dark")
                 self.javascript_enabled = settings.get("javascript_enabled", True)
                 self.block_popups = settings.get("block_popups", True)
                 self.block_mixed_content = settings.get("block_mixed_content", True)
         else:
-            self.home_page = "https://www.google.com"
+            self.home_page = self.DEFAULT_HOME_PAGE
             self.search_engine = "Google"
             self.theme = "Dark"
             self.javascript_enabled = True
@@ -568,10 +570,10 @@ class MojoBrowser(QMainWindow):
             json.dump(settings, file)
 
     def load_bookmarks(self):
-        if os.path.exists(self.bookmarks_file):
+        try:
             with open(self.bookmarks_file, "r") as file:
                 self.bookmarks = json.load(file)
-        else:
+        except FileNotFoundError:
             self.bookmarks = []
 
     def save_bookmarks(self):
@@ -610,10 +612,10 @@ class MojoBrowser(QMainWindow):
         browser.setUrl(QUrl(url))
 
     def load_history(self):
-        if os.path.exists(self.history_file):
+        try:
             with open(self.history_file, "r") as file:
                 self.history = json.load(file)
-        else:
+        except FileNotFoundError:
             self.history = []
 
     def save_history(self):
