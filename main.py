@@ -340,6 +340,7 @@ class MojoBrowser(QMainWindow):
 
     def add_new_tab(self, url=None):
         browser = QWebEngineView()
+        self.apply_webengine_settings(browser)
         if url:
             browser.setUrl(url)
         else:
@@ -347,6 +348,8 @@ class MojoBrowser(QMainWindow):
         i = self.tabs.addTab(browser, "New Tab")
         self.tabs.setCurrentIndex(i)
         browser.urlChanged.connect(lambda url, browser=browser: self.update_tab_title(browser, url))
+        browser.urlChanged.connect(self.update_history)
+        browser.urlChanged.connect(lambda url, browser=browser: self.update_address_bar(self.tabs.currentIndex()))
 
     def close_tab(self, index):
         if self.tabs.count() > 1:
@@ -413,13 +416,20 @@ class MojoBrowser(QMainWindow):
         self.block_popups = block_popups
         self.block_mixed_content = block_mixed_content
 
-        # Update the URL of the current tab's browser instance
-        current_browser = self.tabs.currentWidget()
-        if current_browser:
-            current_browser.setUrl(QUrl(self.home_page))
-        
         self.apply_styles()
         self.save_settings()
+
+        # Apply web engine settings to all existing tabs
+        for i in range(self.tabs.count()):
+            browser = self.tabs.widget(i)
+            self.apply_webengine_settings(browser)
+
+    def apply_webengine_settings(self, browser):
+        settings = browser.settings()
+        settings.setAttribute(settings.WebAttribute.JavascriptEnabled, self.javascript_enabled)
+        settings.setAttribute(settings.WebAttribute.JavascriptCanOpenWindows, not self.block_popups)
+        settings.setAttribute(settings.WebAttribute.LocalContentCanAccessRemoteUrls, not self.block_mixed_content)
+
 
     def load_settings(self):
         if os.path.exists(self.settings_file):
