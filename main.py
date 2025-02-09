@@ -13,17 +13,17 @@ from PyQt5.QtCore import QUrl, Qt, QSize
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor
 
 # Constants for styling
-PRIMARY_COLOR = "#3498db"
+PRIMARY_COLOR = "#1e3a8a"  # Dark Blue
 SECONDARY_COLOR = "#2c3e50"
-TEXT_COLOR = "#ffffff"
+TEXT_COLOR = "#ffffff"  # White
 ACCENT_COLOR = "#f39c12"
 BACKGROUND_COLOR = "#ecf0f1"
-DARK_MODE_BACKGROUND = "#2c3e50"
-DARK_MODE_TEXT = "#ffffff"
+DARK_MODE_BACKGROUND = "#000000"  # Black Background
+DARK_MODE_TEXT = "#ffffff"  # White Text
 BORDER_RADIUS = "8px"
 BUTTON_BORDER_RADIUS = "5px"
-BUTTON_HOVER_COLOR = "#5DADE2"
-BUTTON_PRESSED_COLOR = "#2E86C1"
+BUTTON_HOVER_COLOR = "#374151"  # Darker Gray for Hover
+BUTTON_PRESSED_COLOR = "#4b5563"  # Even Darker Gray for Pressed
 
 class DownloadHandler:
     def __init__(self, browser):
@@ -139,7 +139,7 @@ class SettingsDialog(QDialog):
         return f"""
             QPushButton {{
                 background-color: {background_color};
-                color: white;
+                color: {TEXT_COLOR};
                 border: none;
                 border-radius: {BUTTON_BORDER_RADIUS};
                 padding: 10px 20px;
@@ -314,6 +314,27 @@ class SettingsDialog(QDialog):
                 QCheckBox {{
                     color: {DARK_MODE_TEXT};
                 }}
+                QTextEdit {{
+                    background-color: #3a3a3a;
+                    color: {DARK_MODE_TEXT};
+                    color: {DARK_MODE_TEXT};
+                    border: 1px solid #444;
+                    border-radius: {BORDER_RADIUS};
+                    padding: 4px;
+                }}
+                QPushButton {{
+                    background-color: {PRIMARY_COLOR};
+                    color: {DARK_MODE_TEXT};
+                    border: none;
+                    border-radius: {BUTTON_BORDER_RADIUS};
+                    padding: 5px 10px;
+                }}
+                QPushButton:hover {{
+                    background-color: {BUTTON_HOVER_COLOR};
+                }}
+                QPushButton:pressed {{
+                    background-color: {BUTTON_PRESSED_COLOR};
+                }}
             """)
         else:
             self.setStyleSheet("")  # Revert to default stylesheet
@@ -481,7 +502,8 @@ class MojoBrowser(QMainWindow):
 
         return f"""
             QToolBar {{
-                background-color: #f0f0f0;
+                background-color: {DARK_MODE_BACKGROUND};
+                color: {DARK_MODE_TEXT};
                 border: none;
                 padding: 5px;
                 border-radius: {BORDER_RADIUS};
@@ -493,9 +515,9 @@ class MojoBrowser(QMainWindow):
     def get_addressbar_style(self):
         return f"""
             QLineEdit {{
-                background-color: #fff;
-                color: #333;
-                border: 1px solid #ccc;
+                background-color: #3a3a3a;
+                color: {DARK_MODE_TEXT};
+                border: 1px solid #444;
                 border-radius: {BORDER_RADIUS};
                 padding: 6px;
                 font-size: 14px;
@@ -511,7 +533,8 @@ class MojoBrowser(QMainWindow):
                     border-radius: {BORDER_RADIUS};
                 }}
                 QToolBar {{
-                    background-color: #2c2c2c;
+                    background-color: {DARK_MODE_BACKGROUND};
+                    color: {DARK_MODE_TEXT};
                     border: none;
                     border-radius: {BORDER_RADIUS};
                 }}
@@ -527,7 +550,7 @@ class MojoBrowser(QMainWindow):
                     padding: 4px;
                 }}
                 QPushButton, QAction {{
-                    background-color: #444;
+                    background-color: {PRIMARY_COLOR};
                     color: {DARK_MODE_TEXT};
                     border: 1px solid #555;
                     border-radius: {BUTTON_BORDER_RADIUS};
@@ -535,17 +558,18 @@ class MojoBrowser(QMainWindow):
                     min-width: 50px;
                 }}
                 QPushButton:hover, QAction:hover {{
-                    background-color: #555;
+                    background-color: {BUTTON_HOVER_COLOR};
                 }}
                 QPushButton:pressed, QAction:pressed {{
-                    background-color: #333;
+                    background-color: {BUTTON_PRESSED_COLOR};
                 }}
                 QTabWidget::pane {{
                     border: none;
                     border-radius: {BORDER_RADIUS};
+                    background-color: {DARK_MODE_BACKGROUND};
                 }}
                 QTabBar::tab {{
-                    background: #2c2c2c;
+                    background-color: #2c2c2c;
                     color: {DARK_MODE_TEXT};
                     border: 1px solid #444;
                     border-bottom: none;
@@ -560,10 +584,24 @@ class MojoBrowser(QMainWindow):
                     margin-top: 2px;
                 }}
                 QStatusBar {{
-                    background-color: #2c2c2c;
+                    background-color: {DARK_MODE_BACKGROUND};
                     color: {DARK_MODE_TEXT};
                     border: none;
                     border-radius: {BORDER_RADIUS};
+                }}
+                QListWidget {{
+                    background-color: #3a3a3a;
+                    color: {DARK_MODE_TEXT};
+                    border: 1px solid #444;
+                    border-radius: {BORDER_RADIUS};
+                    padding: 5px;
+                    font-size: 14px;
+                }}
+                QListWidget::item {{
+                    padding: 5px;
+                }}
+                QListWidget::item:selected {{
+                    background-color: #555;
                 }}
             """,
             "Light": f"""
@@ -627,9 +665,23 @@ class MojoBrowser(QMainWindow):
                     border: none;
                     border-radius: {BORDER_RADIUS};
                 }}
+                QListWidget {{
+                    background-color: #fff;
+                    color: #333;
+                    border: 1px solid #ccc;
+                    border-radius: {BORDER_RADIUS};
+                    padding: 5px;
+                    font-size: 14px;
+                }}
+                QListWidget::item {{
+                    padding: 5px;
+                }}
+                QListWidget::item:selected {{
+                    background-color: #e0e0e0;
+                }}
             """
         }
-        style = styles.get(self.theme, "")
+        style = styles.get(self.theme, "Dark")  # Default to Dark theme if not found
         self.setStyleSheet(style)
 
         if hasattr(self, 'settings_dialog') and self.settings_dialog is not None:
