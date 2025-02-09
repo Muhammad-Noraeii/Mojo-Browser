@@ -6,11 +6,21 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QLineEdit,
     QPushButton, QHBoxLayout, QLabel, QComboBox, QDialog, QFormLayout, QTabWidget, QTextEdit, QCheckBox,
     QFileDialog, QMessageBox, QListWidget, QListWidgetItem, QProgressDialog, QToolBar, QStatusBar,
-    QAction, QStyle, QSizePolicy, QSpacerItem
+    QAction, QStyle, QSizePolicy, QSpacerItem, QScrollArea
 )
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile
 from PyQt5.QtCore import QUrl, Qt, QSize
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon, QFont, QPalette, QColor
+
+# Constants for styling
+PRIMARY_COLOR = "#3498db"
+SECONDARY_COLOR = "#2c3e50"
+TEXT_COLOR = "#ffffff"
+ACCENT_COLOR = "#f39c12"
+BACKGROUND_COLOR = "#ecf0f1"
+DARK_MODE_BACKGROUND = "#2c3e50"
+DARK_MODE_TEXT = "#ffffff"
+
 
 class DownloadHandler:
     def __init__(self, browser):
@@ -52,52 +62,16 @@ class DownloadHandler:
             QMessageBox.warning(None, "Download Failed", "The download was canceled or failed.")
         self.current_download = None
 
+
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setGeometry(300, 300, 500, 600)
+        self.setGeometry(300, 300, 600, 500)  # Adjusted size
 
         # Tab widget for settings
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane { /* The tab widget frame */
-                border-top: 2px solid #C2C7CB;
-            }
-
-            QTabWidget::tab-bar {
-                left: 5px; /* move to the right by 5px */
-            }
-
-            /* Style the tab using the tab sub-control. Note that
-               it reads QTabBar _not_ QTabWidget */
-            QTabBar::tab {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                            stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
-                                            stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
-                border: 2px solid #C4C4C3;
-                border-bottom-color: #C2C7CB; /* same as the pane color */
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-                min-width: 8ex;
-                padding: 2px;
-            }
-
-            QTabBar::tab:selected, QTabBar::tab:hover {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                            stop: 0 #FAFAFA, stop: 0.4 #F4F4F4,
-                                            stop: 0.5 #E2E2E2, stop: 1.0 #D8D8D8);
-            }
-
-            QTabBar::tab:selected {
-                border-color: #9B9B9B;
-                border-bottom-color: #C2C7CB; /* same as pane color */
-            }
-
-            QTabBar::tab:!selected {
-                margin-top: 2px; /* make non-selected tabs look smaller */
-            }
-        """)
+        self.tabs.setStyleSheet(self.get_tab_widget_style())
         self.general_tab = QWidget()
         self.security_tab = QWidget()
         self.data_management_tab = QWidget()
@@ -117,19 +91,8 @@ class SettingsDialog(QDialog):
 
         # Save button
         self.save_button = QPushButton("Save Settings")
-        self.save_button.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 10px 20px;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #367C39;
-            }
-        """)
+        self.save_button.setStyleSheet(self.get_button_style(PRIMARY_COLOR, "#367C39"))
+
         self.save_button.clicked.connect(self.save_settings)
 
         # Main Layout
@@ -140,6 +103,63 @@ class SettingsDialog(QDialog):
 
         # Update cache size
         self.update_cache_size()
+
+        # Apply theme
+        self.apply_theme()
+
+    def get_tab_widget_style(self):
+        return """
+            QTabWidget::pane {
+                border-top: 2px solid #C2C7CB;
+            }
+
+            QTabWidget::tab-bar {
+                left: 5px;
+            }
+
+            QTabBar::tab {
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                            stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
+                                            stop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);
+                border: 2px solid #C4C4C3;
+                border-bottom-color: #C2C7CB;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+                min-width: 8ex;
+                padding: 2px;
+                color: #333; /* Set default text color */
+            }
+
+            QTabBar::tab:selected, QTabBar::tab:hover {
+                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                            stop: 0 #FAFAFA, stop: 0.4 #F4F4F4,
+                                            stop: 0.5 #E2E2E2, stop: 1.0 #D8D8D8);
+            }
+
+            QTabBar::tab:selected {
+                border-color: #9B9B9B;
+                border-bottom-color: #C2C7CB;
+            }
+
+            QTabBar::tab:!selected {
+                margin-top: 2px;
+            }
+        """
+
+    def get_button_style(self, background_color, hover_color):
+        return f"""
+            QPushButton {{
+                background-color: {background_color};
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 10px 20px;
+                font-size: 16px;
+            }}
+            QPushButton:hover {{
+                background-color: {hover_color};
+            }}
+        """
 
     def setup_general_tab(self):
         self.general_layout = QFormLayout()
@@ -183,18 +203,7 @@ class SettingsDialog(QDialog):
         self.security_layout.addRow(self.mixed_content_checkbox)
 
         self.clear_cookies_button = QPushButton("Clear Cookies")
-        self.clear_cookies_button.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-        """)
+        self.clear_cookies_button.setStyleSheet(self.get_button_style("#f44336", "#d32f2f"))
         self.clear_cookies_button.clicked.connect(self.clear_cookies)
         self.security_layout.addWidget(self.clear_cookies_button)
 
@@ -203,34 +212,12 @@ class SettingsDialog(QDialog):
         self.data_management_tab.setLayout(self.data_management_layout)
 
         self.clear_cache_button = QPushButton("Clear Cache")
-        self.clear_cache_button.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-        """)
+        self.clear_cache_button.setStyleSheet(self.get_button_style("#f44336", "#d32f2f"))
         self.clear_cache_button.clicked.connect(self.clear_cache)
         self.data_management_layout.addWidget(self.clear_cache_button)
 
         self.clear_history_button = QPushButton("Clear History")
-        self.clear_history_button.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-        """)
+        self.clear_history_button.setStyleSheet(self.get_button_style("#f44336", "#d32f2f"))
         self.clear_history_button.clicked.connect(self.clear_history)
         self.data_management_layout.addWidget(self.clear_history_button)
 
@@ -303,6 +290,39 @@ class SettingsDialog(QDialog):
         )
         self.accept()
 
+    def apply_theme(self):
+        theme = self.parent().theme
+        if theme == "Dark":
+            self.setStyleSheet(f"""
+                QDialog {{
+                    background-color: {DARK_MODE_BACKGROUND};
+                    color: {DARK_MODE_TEXT};
+                }}
+                QLabel {{
+                    color: {DARK_MODE_TEXT};
+                }}
+                QLineEdit {{
+                    background-color: #3a3a3a;
+                    color: {DARK_MODE_TEXT};
+                    border: 1px solid #444;
+                    border-radius: 3px;
+                    padding: 4px;
+                }}
+                QComboBox {{
+                    background-color: #3a3a3a;
+                    color: {DARK_MODE_TEXT};
+                    border: 1px solid #444;
+                    border-radius: 3px;
+                    padding: 4px;
+                }}
+                QCheckBox {{
+                    color: {DARK_MODE_TEXT};
+                }}
+            """)
+        else:
+            self.setStyleSheet("")  # Revert to default stylesheet
+
+
 class MojoBrowser(QMainWindow):
     DEFAULT_HOME_PAGE = "https://search.mojox.org"  # Changed home page
 
@@ -330,7 +350,20 @@ class MojoBrowser(QMainWindow):
         self.tabs.setTabsClosable(True)
         self.tabs.tabCloseRequested.connect(self.close_tab)
         self.tabs.currentChanged.connect(self.update_address_bar)
-        self.tabs.setStyleSheet("""
+        self.tabs.setStyleSheet(self.get_tab_style())
+
+        self.layout.addWidget(self.tabs)
+
+        self.add_new_tab(QUrl(self.DEFAULT_HOME_PAGE))  # Load default_page.html in the home tab
+
+        self.apply_styles()
+
+        self.status_bar = QStatusBar()
+        self.status_bar.setStyleSheet(self.get_statusbar_style())
+        self.setStatusBar(self.status_bar)
+
+    def get_tab_style(self):
+        return """
             QTabWidget::pane {
                 border: none;
             }
@@ -359,50 +392,22 @@ class MojoBrowser(QMainWindow):
             QTabWidget::tab-bar {
                 alignment: center;
             }
-        """)
+        """
 
-        self.layout.addWidget(self.tabs)
-
-        self.add_new_tab(QUrl(self.DEFAULT_HOME_PAGE))  # Load default_page.html in the home tab
-
-        self.apply_styles()
-
-        self.status_bar = QStatusBar()
-        self.status_bar.setStyleSheet("""
+    def get_statusbar_style(self):
+        return """
             QStatusBar {
                 background-color: #f0f0f0;
                 color: #333;
                 border: none;
             }
-        """)
-        self.setStatusBar(self.status_bar)
+        """
 
     def create_tool_bar(self):
         self.tool_bar = QToolBar("Navigation")
         self.addToolBar(self.tool_bar)
         self.tool_bar.setIconSize(QSize(24, 24))
-        self.tool_bar.setStyleSheet("""
-            QToolBar {
-                background-color: #f0f0f0;
-                border: none;
-                padding: 5px;
-            }
-
-            QToolButton {
-                background-color: transparent;
-                border: none;
-                margin: 2px;
-            }
-
-            QToolButton:hover {
-                background-color: #e0e0e0;
-                border-radius: 4px;
-            }
-
-            QToolButton:pressed {
-                background-color: #d0d0d0;
-            }
-        """)
+        self.tool_bar.setStyleSheet(self.get_toolbar_style())
 
         # Back button
         self.back_button = QAction(QIcon.fromTheme("go-previous"), "Back", self)
@@ -430,16 +435,7 @@ class MojoBrowser(QMainWindow):
 
         # Address bar
         self.address_bar = QLineEdit()
-        self.address_bar.setStyleSheet("""
-            QLineEdit {
-                background-color: #fff;
-                color: #333;
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                padding: 6px;
-                font-size: 14px;
-            }
-        """)
+        self.address_bar.setStyleSheet(self.get_addressbar_style())
         self.address_bar.returnPressed.connect(self.load_page)
         self.tool_bar.addWidget(self.address_bar)
 
@@ -484,124 +480,164 @@ class MojoBrowser(QMainWindow):
         self.settings_button.triggered.connect(self.open_settings)
         self.tool_bar.addAction(self.settings_button)
 
+    def get_toolbar_style(self):
+        return f"""
+            QToolBar {{
+                background-color: #f0f0f0;
+                border: none;
+                padding: 5px;
+            }}
+
+            QToolButton {{
+                background-color: transparent;
+                border: none;
+                margin: 2px;
+            }}
+
+            QToolButton:hover {{
+                background-color: #e0e0e0;
+                border-radius: 4px;
+            }}
+
+            QToolButton:pressed {{
+                background-color: #d0d0d0;
+            }}
+        """
+
+    def get_addressbar_style(self):
+        return """
+            QLineEdit {
+                background-color: #fff;
+                color: #333;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 6px;
+                font-size: 14px;
+            }
+        """
+
     def apply_styles(self):
         # Define styles dictionary for better readability
         styles = {
-            "Dark": """
-                QMainWindow {
-                    background-color: #1e1e1e;
-                    color: #ffffff;
-                }
-                QToolBar {
+            "Dark": f"""
+                QMainWindow {{
+                    background-color: {DARK_MODE_BACKGROUND};
+                    color: {DARK_MODE_TEXT};
+                }}
+                QToolBar {{
                     background-color: #2c2c2c;
                     border: none;
-                }
-                QToolBar::handle {
+                }}
+                QToolBar::handle {{
                     background: transparent;
                     border: none;
-                }
-                QLineEdit {
+                }}
+                QLineEdit {{
                     background-color: #3a3a3a;
-                    color: #ffffff;
+                    color: {DARK_MODE_TEXT};
                     border: 1px solid #444;
                     border-radius: 3px;
                     padding: 4px;
-                }
-                QPushButton, QAction {
+                }}
+                QPushButton, QAction {{
                     background-color: #444;
-                    color: #ffffff;
+                    color: {DARK_MODE_TEXT};
                     border: 1px solid #555;
                     border-radius: 3px;
                     padding: 4px 8px;
                     min-width: 50px;
-                }
-                QPushButton:hover, QAction:hover {
+                }}
+                QPushButton:hover, QAction:hover {{
                     background-color: #555;
-                }
-                QPushButton:pressed, QAction:pressed {
+                }}
+                QPushButton:pressed, QAction:pressed {{
                     background-color: #333;
-                }
-                QTabWidget::pane {
+                }}
+                QTabWidget::pane {{
                     border: none;
-                }
-                QTabBar::tab {
+                }}
+                QTabBar::tab {{
                     background: #2c2c2c;
-                    color: #ffffff;
+                    color: {DARK_MODE_TEXT};
                     border: 1px solid #444;
                     border-bottom: none;
                     padding: 4px 12px;
-                }
-                QTabBar::tab:selected {
-                    background: #1e1e1e;
-                }
-                QTabBar::tab:!selected {
+                }}
+                QTabBar::tab:selected {{
+                    background: {DARK_MODE_BACKGROUND};
+                }}
+                QTabBar::tab:!selected {{
                     margin-top: 2px;
-                }
-                QStatusBar {
+                }}
+                QStatusBar {{
                     background-color: #2c2c2c;
-                    color: #ffffff;
+                    color: {DARK_MODE_TEXT};
                     border: none;
-                }
+                }}
             """,
-            "Light": """
-                QMainWindow {
-                    background-color: #ffffff;
-                    color: #000000;
-                }
-                 QToolBar {
+            "Light": f"""
+                QMainWindow {{
+                    background-color: {BACKGROUND_COLOR};
+                    color: {TEXT_COLOR};
+                }}
+                 QToolBar {{
                     background-color: #f0f0f0;
                     border: none;
-                }
-                QToolBar::handle {
+                }}
+                QToolBar::handle {{
                     background: transparent;
                     border: none;
-                }
-                QLineEdit {
+                }}
+                QLineEdit {{
                     background-color: #f0f0f0;
-                    color: #000000;
+                    color: {TEXT_COLOR};
                     border: 1px solid #ccc;
                     border-radius: 3px;
                     padding: 4px;
-                }
-                QPushButton, QAction {
+                }}
+                QPushButton, QAction {{
                     background-color: #e0e0e0;
-                    color: #000000;
+                    color: {TEXT_COLOR};
                     border: 1px solid #bbb;
                     border-radius: 3px;
                     padding: 4px 8px;
                     min-width: 50px;
-                }
-                QPushButton:hover, QAction:hover {
+                }}
+                QPushButton:hover, QAction:hover {{
                     background-color: #d0d0d0;
-                }
-                QPushButton:pressed, QAction:pressed {
+                }}
+                QPushButton:pressed, QAction:pressed {{
                     background-color: #c0c0c0;
-                }
-                QTabWidget::pane {
+                }}
+                QTabWidget::pane {{
                     border: none;
-                }
-                QTabBar::tab {
+                }}
+                QTabBar::tab {{
                     background: #e0e0e0;
-                    color: #000000;
+                    color: {TEXT_COLOR};
                     border: 1px solid #bbb;
                     border-bottom: none;
                     padding: 4px 12px;
-                }
-                QTabBar::tab:selected {
-                    background: #ffffff;
-                }
-                 QTabBar::tab:!selected {
+                }}
+                QTabBar::tab:selected {{
+                    background: {BACKGROUND_COLOR};
+                }}
+                 QTabBar::tab:!selected {{
                     margin-top: 2px;
-                }
-                QStatusBar {
+                }}
+                QStatusBar {{
                     background-color: #f0f0f0;
-                    color: #000000;
+                    color: {TEXT_COLOR};
                     border: none;
-                }
+                }}
             """
         }
         style = styles.get(self.theme, "")
         self.setStyleSheet(style)
+
+        # Update the style of existing dialogs
+        if hasattr(self, 'settings_dialog') and self.settings_dialog is not None:
+            self.settings_dialog.apply_theme()
 
     def add_new_tab(self, url=None):
         browser = QWebEngineView()
@@ -670,15 +706,15 @@ class MojoBrowser(QMainWindow):
         browser.setUrl(QUrl(self.home_page))
 
     def open_settings(self):
-        dialog = SettingsDialog(self)
-        dialog.setParent(self)
-        dialog.home_page_input.setText(self.home_page)
-        dialog.search_engine_dropdown.setCurrentText(self.search_engine)
-        dialog.theme_dropdown.setCurrentText(self.theme)
-        dialog.javascript_checkbox.setChecked(self.javascript_enabled)
-        dialog.popup_checkbox.setChecked(self.block_popups)
-        dialog.mixed_content_checkbox.setChecked(self.block_mixed_content)
-        dialog.exec_()
+        self.settings_dialog = SettingsDialog(self)
+        self.settings_dialog.setParent(self)
+        self.settings_dialog.home_page_input.setText(self.home_page)
+        self.settings_dialog.search_engine_dropdown.setCurrentText(self.search_engine)
+        self.settings_dialog.theme_dropdown.setCurrentText(self.theme)
+        self.settings_dialog.javascript_checkbox.setChecked(self.javascript_enabled)
+        self.settings_dialog.popup_checkbox.setChecked(self.block_popups)
+        self.settings_dialog.mixed_content_checkbox.setChecked(self.block_mixed_content)
+        self.settings_dialog.exec_()
 
     def apply_settings(self, home_page, search_engine, theme, javascript_enabled, block_popups, block_mixed_content):
         self.home_page = home_page or self.home_page
@@ -701,7 +737,6 @@ class MojoBrowser(QMainWindow):
         settings.setAttribute(settings.WebAttribute.JavascriptEnabled, self.javascript_enabled)
         settings.setAttribute(settings.WebAttribute.JavascriptCanOpenWindows, not self.block_popups)
         settings.setAttribute(settings.WebAttribute.LocalContentCanAccessRemoteUrls, not self.block_mixed_content)
-
 
     def load_settings(self):
         if os.path.exists(self.settings_file):
@@ -757,7 +792,7 @@ class MojoBrowser(QMainWindow):
     def view_bookmarks(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Bookmarks")
-        dialog.setGeometry(300, 300, 400, 300)
+        dialog.setGeometry(300, 400, 300)
         layout = QVBoxLayout()
         bookmark_list = QListWidget()
         bookmark_list.setStyleSheet("""
