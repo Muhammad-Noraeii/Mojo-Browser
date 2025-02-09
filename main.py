@@ -20,11 +20,10 @@ ACCENT_COLOR = "#f39c12"
 BACKGROUND_COLOR = "#ecf0f1"
 DARK_MODE_BACKGROUND = "#2c3e50"
 DARK_MODE_TEXT = "#ffffff"
-BORDER_RADIUS = "8px"  # Added border radius constant
+BORDER_RADIUS = "8px"
 BUTTON_BORDER_RADIUS = "5px"
-BUTTON_HOVER_COLOR = "#5DADE2"  # Lightened primary color for hover
-BUTTON_PRESSED_COLOR = "#2E86C1"  # Darkened primary color for pressed
-
+BUTTON_HOVER_COLOR = "#5DADE2"
+BUTTON_PRESSED_COLOR = "#2E86C1"
 
 class DownloadHandler:
     def __init__(self, browser):
@@ -66,14 +65,12 @@ class DownloadHandler:
             QMessageBox.warning(None, "Download Failed", "The download was canceled or failed.")
         self.current_download = None
 
-
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setGeometry(300, 300, 600, 500)  # Adjusted size
+        self.setGeometry(300, 300, 600, 500)
 
-        # Tab widget for settings
         self.tabs = QTabWidget()
         self.tabs.setStyleSheet(self.get_tab_widget_style())
         self.general_tab = QWidget()
@@ -81,34 +78,26 @@ class SettingsDialog(QDialog):
         self.data_management_tab = QWidget()
         self.about_tab = QWidget()
 
-        # Add tabs
         self.tabs.addTab(self.general_tab, "General")
         self.tabs.addTab(self.security_tab, "Security")
         self.tabs.addTab(self.data_management_tab, "Data Management")
         self.tabs.addTab(self.about_tab, "About Us")
 
-        # Set up tabs
         self.setup_general_tab()
         self.setup_security_tab()
         self.setup_data_management_tab()
         self.setup_about_tab()
 
-        # Save button
         self.save_button = QPushButton("Save Settings")
         self.save_button.setStyleSheet(self.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
-
         self.save_button.clicked.connect(self.save_settings)
 
-        # Main Layout
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.tabs)
         self.layout.addWidget(self.save_button)
         self.setLayout(self.layout)
 
-        # Update cache size
         self.update_cache_size()
-
-        # Apply theme
         self.apply_theme()
 
     def get_tab_widget_style(self):
@@ -117,11 +106,9 @@ class SettingsDialog(QDialog):
                 border-top: 2px solid #C2C7CB;
                 border-radius: {BORDER_RADIUS};
             }}
-
             QTabWidget::tab-bar {{
                 left: 5px;
             }}
-
             QTabBar::tab {{
                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                             stop: 0 #E1E1E1, stop: 0.4 #DDDDDD,
@@ -132,20 +119,17 @@ class SettingsDialog(QDialog):
                 border-top-right-radius: {BORDER_RADIUS};
                 min-width: 8ex;
                 padding: 2px;
-                color: #333; /* Set default text color */
+                color: #333;
             }}
-
             QTabBar::tab:selected, QTabBar::tab:hover {{
                 background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                             stop: 0 #FAFAFA, stop: 0.4 #F4F4F4,
                                             stop: 0.5 #E2E2E2, stop: 1.0 #D8D8D8);
             }}
-
             QTabBar::tab:selected {{
                 border-color: #9B9B9B;
                 border-bottom-color: #C2C7CB;
             }}
-
             QTabBar::tab:!selected {{
                 margin-top: 2px;
             }}
@@ -176,21 +160,21 @@ class SettingsDialog(QDialog):
         self.home_page_label = QLabel("Home Page:")
         self.home_page_label.setStyleSheet("font-weight: bold;")
         self.home_page_input = QLineEdit()
-        self.home_page_input.setStyleSheet(f"border-radius: {BORDER_RADIUS};")  # Add border radius
+        self.home_page_input.setStyleSheet(f"border-radius: {BORDER_RADIUS};")
         self.home_page_input.setPlaceholderText("Enter your home page URL...")
         self.general_layout.addRow(self.home_page_label, self.home_page_input)
 
         self.search_engine_label = QLabel("Search Engine:")
         self.search_engine_label.setStyleSheet("font-weight: bold;")
         self.search_engine_dropdown = QComboBox()
-        self.search_engine_dropdown.setStyleSheet(f"border-radius: {BORDER_RADIUS};")  # Add border radius
+        self.search_engine_dropdown.setStyleSheet(f"border-radius: {BORDER_RADIUS};")
         self.search_engine_dropdown.addItems(["Google", "Bing", "DuckDuckGo", "Yahoo"])
         self.general_layout.addRow(self.search_engine_label, self.search_engine_dropdown)
 
         self.theme_label = QLabel("Theme:")
         self.theme_label.setStyleSheet("font-weight: bold;")
         self.theme_dropdown = QComboBox()
-        self.theme_dropdown.setStyleSheet(f"border-radius: {BORDER_RADIUS};")  # Add border radius
+        self.theme_dropdown.setStyleSheet(f"border-radius: {BORDER_RADIUS};")
         self.theme_dropdown.addItems(["Dark", "Light"])
         self.general_layout.addRow(self.theme_label, self.theme_dropdown)
 
@@ -241,7 +225,7 @@ class SettingsDialog(QDialog):
         self.about_tab.setLayout(self.about_layout)
         self.about_text = QTextEdit()
         self.about_text.setReadOnly(True)
-        self.about_text.setStyleSheet(f"background-color: #f0f0f0; color: #333; border-radius: {BORDER_RADIUS};")  # Add border radius
+        self.about_text.setStyleSheet(f"background-color: #f0f0f0; color: #333; border-radius: {BORDER_RADIUS};")
         self.about_text.setText(
             "Mojo Browser | v0.1 Alpha\n\n"
             "Developed using PyQt5 & Python.\n"
@@ -334,16 +318,14 @@ class SettingsDialog(QDialog):
         else:
             self.setStyleSheet("")  # Revert to default stylesheet
 
-
 class MojoBrowser(QMainWindow):
-    DEFAULT_HOME_PAGE = "https://search.mojox.org"  # Changed home page
+    DEFAULT_HOME_PAGE = "https://search.mojox.org"
 
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Mojo Browser")
         self.setGeometry(100, 100, 1024, 768)
 
-        # Initialize settings persistence
         self.settings_persistence = SettingsPersistence(self)
 
         self.bookmarks = []
@@ -366,7 +348,7 @@ class MojoBrowser(QMainWindow):
         self.layout.addWidget(self.tabs)
 
         self.settings_persistence.load_settings()
-        self.add_new_tab(QUrl(self.home_page))  # Load default_page.html in the home tab
+        self.add_new_tab(QUrl(self.home_page))
 
         self.apply_styles()
 
@@ -380,7 +362,6 @@ class MojoBrowser(QMainWindow):
                 border: none;
                 border-radius: {BORDER_RADIUS};
             }}
-
             QTabBar::tab {{
                 background: #f0f0f0;
                 color: #333;
@@ -391,19 +372,15 @@ class MojoBrowser(QMainWindow):
                 border-top-left-radius: {BORDER_RADIUS};
                 border-top-right-radius: {BORDER_RADIUS};
             }}
-
             QTabBar::tab:selected {{
                 background: #fff;
             }}
-
             QTabBar::tab:!selected {{
                 margin-top: 2px;
             }}
-
             QTabBar::tab:hover {{
                 background: #e0e0e0;
             }}
-
             QTabWidget::tab-bar {{
                 alignment: center;
             }}
@@ -425,72 +402,60 @@ class MojoBrowser(QMainWindow):
         self.tool_bar.setIconSize(QSize(24, 24))
         self.tool_bar.setStyleSheet(self.get_toolbar_style())
 
-        # Back button
         self.back_button = QAction(QIcon.fromTheme("go-previous"), "Back", self)
         self.back_button.setStatusTip("Go to the previous page")
         self.back_button.triggered.connect(self.browser_back)
         self.tool_bar.addAction(self.back_button)
 
-        # Forward button
         self.forward_button = QAction(QIcon.fromTheme("go-next"), "Forward", self)
         self.forward_button.setStatusTip("Go to the next page")
         self.forward_button.triggered.connect(self.browser_forward)
         self.tool_bar.addAction(self.forward_button)
 
-        # Reload button
         self.reload_button = QAction(QIcon.fromTheme("view-refresh"), "Reload", self)
         self.reload_button.setStatusTip("Reload the current page")
         self.reload_button.triggered.connect(self.browser_reload)
         self.tool_bar.addAction(self.reload_button)
 
-        # Home button
         self.home_button = QAction(QIcon.fromTheme("go-home"), "Home", self)
         self.home_button.setStatusTip("Go to the homepage")
         self.home_button.triggered.connect(self.go_home)
         self.tool_bar.addAction(self.home_button)
 
-        # Address bar
         self.address_bar = QLineEdit()
         self.address_bar.setStyleSheet(self.get_addressbar_style())
         self.address_bar.returnPressed.connect(self.load_page)
         self.tool_bar.addWidget(self.address_bar)
 
-        # Go button
         self.go_button = QAction(QIcon.fromTheme("go-jump"), "Go", self)
         self.go_button.setStatusTip("Go to the entered address")
         self.go_button.triggered.connect(self.load_page)
         self.tool_bar.addAction(self.go_button)
 
-        # Spacer
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.tool_bar.addWidget(spacer)
 
-        # New tab button
         self.new_tab_button = QAction(QIcon.fromTheme("document-new"), "New Tab", self)
         self.new_tab_button.setStatusTip("Open a new tab")
         self.new_tab_button.triggered.connect(self.add_new_tab)
         self.tool_bar.addAction(self.new_tab_button)
 
-        # Bookmark button
         self.bookmark_button = QAction(QIcon.fromTheme("emblem-favorite"), "Bookmark", self)
         self.bookmark_button.setStatusTip("Bookmark this page")
         self.bookmark_button.triggered.connect(self.settings_persistence.add_bookmark)
         self.tool_bar.addAction(self.bookmark_button)
 
-        # View bookmarks button
         self.view_bookmarks_button = QAction(QIcon.fromTheme("bookmarks"), "View Bookmarks", self)
         self.view_bookmarks_button.setStatusTip("View your bookmarks")
         self.view_bookmarks_button.triggered.connect(self.settings_persistence.view_bookmarks)
         self.tool_bar.addAction(self.view_bookmarks_button)
 
-        # History button
         self.history_button = QAction(QIcon.fromTheme("document-open-recent"), "History", self)
         self.history_button.setStatusTip("View your browsing history")
         self.history_button.triggered.connect(self.settings_persistence.view_history)
         self.tool_bar.addAction(self.history_button)
 
-        # Settings button
         self.settings_button = QAction(QIcon.fromTheme("preferences-system"), "Settings", self)
         self.settings_button.setStatusTip("Open the settings dialog")
         self.settings_button.triggered.connect(self.open_settings)
@@ -506,11 +471,9 @@ class MojoBrowser(QMainWindow):
                 border-radius: {BUTTON_BORDER_RADIUS};
                 padding: 5px;
             }}
-
             QToolButton:hover {{
                 background-color: {BUTTON_HOVER_COLOR};
             }}
-
             QToolButton:pressed {{
                 background-color: {BUTTON_PRESSED_COLOR};
             }}
@@ -540,7 +503,6 @@ class MojoBrowser(QMainWindow):
         """
 
     def apply_styles(self):
-        # Define styles dictionary for better readability
         styles = {
             "Dark": f"""
                 QMainWindow {{
@@ -580,7 +542,7 @@ class MojoBrowser(QMainWindow):
                 }}
                 QTabWidget::pane {{
                     border: none;
-                     border-radius: {BORDER_RADIUS};
+                    border-radius: {BORDER_RADIUS};
                 }}
                 QTabBar::tab {{
                     background: #2c2c2c;
@@ -590,7 +552,6 @@ class MojoBrowser(QMainWindow):
                     padding: 4px 12px;
                     border-top-left-radius: {BORDER_RADIUS};
                     border-top-right-radius: {BORDER_RADIUS};
-
                 }}
                 QTabBar::tab:selected {{
                     background: {DARK_MODE_BACKGROUND};
@@ -611,7 +572,7 @@ class MojoBrowser(QMainWindow):
                     color: {TEXT_COLOR};
                     border-radius: {BORDER_RADIUS};
                 }}
-                 QToolBar {{
+                QToolBar {{
                     background-color: #f0f0f0;
                     border: none;
                     border-radius: {BORDER_RADIUS};
@@ -651,13 +612,13 @@ class MojoBrowser(QMainWindow):
                     border: 1px solid #bbb;
                     border-bottom: none;
                     padding: 4px 12px;
-                   border-top-left-radius: {BORDER_RADIUS};
+                    border-top-left-radius: {BORDER_RADIUS};
                     border-top-right-radius: {BORDER_RADIUS};
                 }}
                 QTabBar::tab:selected {{
                     background: {BACKGROUND_COLOR};
                 }}
-                 QTabBar::tab:!selected {{
+                QTabBar::tab:!selected {{
                     margin-top: 2px;
                 }}
                 QStatusBar {{
@@ -671,7 +632,6 @@ class MojoBrowser(QMainWindow):
         style = styles.get(self.theme, "")
         self.setStyleSheet(style)
 
-        # Update the style of existing dialogs
         if hasattr(self, 'settings_dialog') and self.settings_dialog is not None:
             self.settings_dialog.apply_theme()
 
@@ -763,7 +723,6 @@ class MojoBrowser(QMainWindow):
         self.apply_styles()
         self.settings_persistence.save_settings()
 
-        # Apply web engine settings to all existing tabs
         for i in range(self.tabs.count()):
             browser = self.tabs.widget(i)
             self.apply_webengine_settings(browser)
@@ -787,7 +746,6 @@ class MojoBrowser(QMainWindow):
 
     def hide_loading(self):
         self.status_bar.clearMessage()
-
 
 class SettingsPersistence:
     def __init__(self, parent):
@@ -853,7 +811,7 @@ class SettingsPersistence:
     def view_bookmarks(self):
         dialog = QDialog(self.parent)
         dialog.setWindowTitle("Bookmarks")
-        dialog.setGeometry(300, 400, 300)
+        dialog.setGeometry(300, 300, 400, 300)
         layout = QVBoxLayout()
         bookmark_list = QListWidget()
         bookmark_list.setStyleSheet(f"""
@@ -865,11 +823,9 @@ class SettingsPersistence:
                 padding: 5px;
                 font-size: 14px;
             }}
-
             QListWidget::item {{
                 padding: 5px;
             }}
-
             QListWidget::item:selected {{
                 background-color: #e0e0e0;
             }}
@@ -888,7 +844,6 @@ class SettingsPersistence:
                 border-radius: {BUTTON_BORDER_RADIUS};
                 padding: 8px 16px;
             }}
-
             QPushButton:hover {{
                 background-color: #777;
             }}
@@ -934,11 +889,9 @@ class SettingsPersistence:
                 padding: 5px;
                 font-size: 14px;
             }}
-
             QListWidget::item {{
                 padding: 5px;
             }}
-
             QListWidget::item:selected {{
                 background-color: #e0e0e0;
             }}
@@ -957,7 +910,6 @@ class SettingsPersistence:
                 border-radius: {BUTTON_BORDER_RADIUS};
                 padding: 8px 16px;
             }}
-
             QPushButton:hover {{
                 background-color: #777;
             }}
@@ -973,7 +925,6 @@ class SettingsPersistence:
                 border-radius: {BUTTON_BORDER_RADIUS};
                 padding: 8px 16px;
             }}
-
             QPushButton:hover {{
                 background-color: #777;
             }}
@@ -992,10 +943,9 @@ class SettingsPersistence:
         self.save_history()
         QMessageBox.information(self.parent, "History Cleared", "Browsing history has been cleared.")
 
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyle("Fusion") 
+    app.setStyle("Fusion")
     browser = MojoBrowser()
     browser.show()
     sys.exit(app.exec_())
