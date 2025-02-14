@@ -412,6 +412,12 @@ class MojoBrowser(QMainWindow):
             tab_selected_background = BACKGROUND_COLOR
 
         return f"""
+            QTabBar::close-button {{
+                image: url("datas/close.png")
+            }}
+            QTabBar::close-button:hover {{
+                image: url("datas/close_hover.png");
+            }}
             QTabWidget::pane {{
                 border: none;
                 border-radius: {BORDER_RADIUS};
