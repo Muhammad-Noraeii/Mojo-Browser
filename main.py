@@ -1,3 +1,4 @@
+
 import sys
 import json
 import os
@@ -178,7 +179,7 @@ class SettingsDialog(QDialog):
         self.search_engine_label.setStyleSheet("font-weight: bold;")
         self.search_engine_dropdown = QComboBox()
         self.search_engine_dropdown.setStyleSheet(f"border-radius: {BORDER_RADIUS};")
-        self.search_engine_dropdown.addItems(["Google", "Bing", "DuckDuckGo", "Yahoo"])
+        self.search_engine_dropdown.addItems(["Lilo", "Mojeek", "Google", "Bing", "DuckDuckGo", "Yahoo", "Ecosia", "Qwant", "Brave", "SearchXNG"])
         self.general_layout.addRow(self.search_engine_label, self.search_engine_dropdown)
 
         self.theme_label = QLabel("Theme:")
@@ -710,7 +711,13 @@ class MojoBrowser(QMainWindow):
             "Google": f"https://www.google.com/search?q={query.replace(' ', '+')}",
             "Bing": f"https://www.bing.com/search?q={query.replace(' ', '+')}",
             "DuckDuckGo": f"https://duckduckgo.com/?q={query.replace(' ', '+')}",
-            "Yahoo": f"https://search.yahoo.com/search?p={query.replace(' ', '+')}"
+            "Yahoo": f"https://search.yahoo.com/search?p={query.replace(' ', '+')}",
+            "Ecosia": f"https://www.ecosia.org/search?method=index&q={query.replace(' ', '+')}",
+            "Qwant": f"https://www.qwant.com/?q={query.replace(' ', '+')}",
+            "Lilo": f"https://search.lilo.org/?q={query.replace(' ', '+')}",
+            "Brave": f"https://search.brave.com/search?q={query.replace(' ', '+')}",
+            "Mokeek": f"https://www.mojeek.com/search?q={query.replace(' ', '+')}",
+            "SearchXNG": f"https://search.inetol.net/search?q={query.replace(' ', '+')}",
         }
         return search_engines.get(self.search_engine, search_engines["Google"])
 
