@@ -1,3 +1,4 @@
+<img width="960" alt="New" src="https://github.com/Muhammad-Noraeii/Mojo-Browser/blob/main/datas/browser.png?raw=true" />
 
 # Mojo Browser - Advanced Python Browser
 <img width="960" alt="New" src="https://github.com/user-attachments/assets/e10c437c-0087-4972-9fdd-d90ca34fcc8f" />
