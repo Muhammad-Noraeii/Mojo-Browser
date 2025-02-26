@@ -13,18 +13,18 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile
 from PyQt5.QtCore import QUrl, Qt, QSize
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor
 
-# Constants for styling
-PRIMARY_COLOR = "#1e3a8a"  # Dark Blue
+
+PRIMARY_COLOR = "#1e3a8a"  
 SECONDARY_COLOR = "#2c3e50"
-TEXT_COLOR = "#ffffff"  # White
+TEXT_COLOR = "#ffffff"  
 ACCENT_COLOR = "#f39c12"
 BACKGROUND_COLOR = "#ecf0f1"
-DARK_MODE_BACKGROUND = "#000000"  # Black Background
-DARK_MODE_TEXT = "#ffffff"  # White Text
+DARK_MODE_BACKGROUND = "#000000"  
+DARK_MODE_TEXT = "#ffffff"  
 BORDER_RADIUS = "8px"
 BUTTON_BORDER_RADIUS = "5px"
-BUTTON_HOVER_COLOR = "#374151"  # Darker Gray for Hover
-BUTTON_PRESSED_COLOR = "#4b5563"  # Even Darker Gray for Pressed
+BUTTON_HOVER_COLOR = "#374151"  
+BUTTON_PRESSED_COLOR = "#4b5563"  
 
 class DownloadHandler:
     def __init__(self, browser):
