@@ -47,6 +47,19 @@ class DownloadWorker(QThread):
             self.download_item.isFinished() and not self.download_item.isPaused()
         ))
 
+
+PRIMARY_COLOR = "#1e3a8a"  
+SECONDARY_COLOR = "#2c3e50"
+TEXT_COLOR = "#ffffff"  
+ACCENT_COLOR = "#f39c12"
+BACKGROUND_COLOR = "#ecf0f1"
+DARK_MODE_BACKGROUND = "#000000"  
+DARK_MODE_TEXT = "#ffffff"  
+BORDER_RADIUS = "8px"
+BUTTON_BORDER_RADIUS = "5px"
+BUTTON_HOVER_COLOR = "#374151"  
+BUTTON_PRESSED_COLOR = "#4b5563"  
+
 class DownloadHandler:
     def __init__(self, browser):
         self.browser = browser
