@@ -280,7 +280,7 @@ class SettingsDialog(QDialog):
         )
         self.about_text.setFont(UI_FONT)
         self.about_text.setText(
-            "Mojo Browser | v0.2 Beta\n\nDeveloped using PyQt5 & Python.\nFeatures:\n"
+            "Mojo Browser | v0.2.3 Beta\n\nDeveloped using PyQt5 & Python.\nFeatures:\n"
             "- Dark/Light themes\n- Multiple search engines\n- Enhanced security\n"
             "- Optional tracker blocking\n- Data management\n- Downloads\n- Proxy support\n- Anti-fingerprinting\n\n"
             "GitHub: https://Github.com/Muhammad-Noraeii\nhttps://Github.com/Guguss-31/"
