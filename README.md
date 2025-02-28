@@ -2,85 +2,202 @@
    <img src="https://github.com/Muhammad-Noraeii/Mojo-Browser/blob/main/datas/browser.png?raw=true"/>
 </div>
 
-# Mojo Browser - Advanced Python Browser
-<img width="960" alt="New" src="https://github.com/user-attachments/assets/e10c437c-0087-4972-9fdd-d90ca34fcc8f" />
 
-## Overview
+# Mojo Browser
 
-Mojo Browser is a cutting-edge web browser developed entirely in Python using the PyQt5 framework. It aims to provide a modern, feature-rich browsing experience with a focus on customization, security, and user-friendly design.  Whether you're a seasoned developer or a casual internet surfer, Mojo Browser offers a unique blend of control and convenience.
+![Mojo Browser Screenshot](https://imgurl.ir/uploads/t367213_screenshot.png)  
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)  
+[![Python Version](https://img.shields.io/badge/Python-3.8+-green.svg)](https://www.python.org/)  
+[![PyQt5](https://img.shields.io/badge/PyQt5-5.15+-orange.svg)](https://www.riverbankcomputing.com/software/pyqt/)  
+[![GitHub Release](https://img.shields.io/github/v/release/Muhammad-Noraeii/Mojo-browser)](https://github.com/Muhammad-Noraeii/Mojo-browser/releases)  
+[![Stars](https://img.shields.io/github/stars/Muhammad-Noraeii/Mojo-browser?style=social)](https://github.com/Muhammad-Noraeii/Mojo-browser/stargazers)
 
-## Features
+**Mojo Browser** is a sleek, privacy-centric web browser built with Python and PyQt5. Designed for users who demand control over their online experience, it blends a modern interface with robust security features and performance optimizations. Whether you’re safeguarding your data or exploring the web, Mojo Browser offers a lightweight, open-source solution that stands out.
 
-*   **Modern UI:**  Sleek and intuitive interface built with PyQt5, offering a visually appealing and easy-to-navigate experience.
-*   **Tabbed Browsing:**  Open multiple websites simultaneously with an efficient tab management system.
-*   **Customizable Themes:**  Switch between Dark and Light themes to suit your preferences.
-*   **Multiple Search Engines:** Choose your preferred search engine from Google, Bing, DuckDuckGo, and Yahoo.
-*   **Advanced Security Settings:**  Fine-tune your browsing experience with options to control JavaScript, pop-up blocking, and mixed content.
-*   **Data Management Tools:**  Clear your cache, cookies, and browsing history with ease.
-*   **Bookmark Management:**  Save and organize your favorite websites for quick access.
-*   **Browsing History:**  Keep track of your online activity with a comprehensive history feature.
-*   **Downloads:** Download files directly through the browser with a progress indicator.
+---
 
-## Technologies Used
+## ✨ Key Features
 
-*   **Python:** The core programming language.
-*   **PyQt5:**  A powerful GUI framework for creating the browser's user interface.
-*   **QtWebEngineWidgets:**  A component of PyQt5 that provides web browsing functionality based on Chromium.
+### Browsing Experience
+- **Multi-Tab Interface**: Manage tabs effortlessly with drag-and-drop, pinning, and contextual options.
+- **Theming Options**: Toggle between Dark, Light, or System themes for a tailored look.
+- **Search Freedom**: Pick from 10+ engines, including privacy-respecting choices like DuckDuckGo and Mojeek.
+- **Reader Mode**: Strip pages to essentials for focused reading.
+- **Download Manager**: Track downloads with progress, pause/resume, and cancel capabilities.
 
-## Installation
+### Privacy & Security
+- **Privacy Engine**: Blocks trackers, enforces HTTPS, and spoofs user agents to shield your identity.
+- **Proxy Support**: Rotates configurable proxies for added anonymity.
+- **Fine-Tuned Controls**: Block third-party cookies, clear data on exit, and enable anti-fingerprinting.
+- **Do Not Track (DNT)**: Signals privacy preferences to websites.
+- **Fingerprint Protection**: Disrupts trackers with canvas noise and uniform screen metrics.
 
-1.  **Prerequisites:**
+### Performance Optimization
+- **Hardware Acceleration**: Leverages GPU for smooth rendering (optional).
+- **Tab Suspension**: Reduces memory use by pausing inactive tabs.
+- **Custom Cache**: Set limits from 50 MB to unlimited for balanced performance.
+- **Preloading**: Optionally speeds up navigation with page preloading.
 
-    *   Python 3.6 or higher
-    *   PyQt5
-    *   PyQtWebEngine
+### Developer Highlights
+- **Modular Codebase**: Cleanly separates privacy, UI, and settings for easy extension.
+- **Open Source**: MIT-licensed, inviting collaboration.
+- **Detailed Logging**: Simplifies debugging with comprehensive logs.
 
-    You can install PyQt5 and PyQtWebEngine using pip:
+---
 
-    ```bash
-    pip install PyQt5 PyQtWebEngine
-    ```
+## 🚀 Getting Started
 
-2.  **Download the Code:**
+### Prerequisites
+- **Python**: 3.8 or higher
+- **PyQt5**: 5.15 or later
+- **OS**: Windows, macOS, Linux
 
-    Clone this repository to your local machine:
+### Installation
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Muhammad-Noraeii/Mojo-browser.git
+   cd Mojo-browser
+   ```
 
-    ```bash
-    git clone https://github.com/Muhammad-Noraeii/Mojo-Browser.git
-    cd Mojo-Browser
-    ```
+2. **Set Up a Virtual Environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   ```
 
-3.  **Run the Browser:**
+3. **Install Dependencies**:
+   ```bash
+   pip install PyQt5
+   ```
 
-    Execute the `main.py` file:
+4. **Launch the Browser**:
+   ```bash
+   python main.py
+   ```
 
-    ```bash
-    python main.py
-    ```
+### Pre-built Binaries
+Download executables from the [Releases](https://github.com/Muhammad-Noraeii/Mojo-browser/releases) page (cross-platform support in development).
 
-## Usage
+---
 
-*   **Navigation:** Use the toolbar buttons (Back, Forward, Reload, Home) to navigate the web.
-*   **Address Bar:**  Enter a URL in the address bar and press Enter to load the page.  If you enter a search query instead of a URL, the browser will use your selected search engine.
-*   **Tabs:**  Click the "New Tab" button to open a new tab. Close tabs by clicking the "x" on the tab.
-*   **Bookmarks:**  Click the "Bookmark" button to add the current page to your bookmarks. Access your bookmarks by clicking the "View Bookmarks" button.
-*   **History:**  View your browsing history by clicking the "History" button.
-*   **Settings:**  Customize your browsing experience by clicking the "Settings" button.
+## 🖥️ How to Use
 
-## Contributing
+1. **Start Browsing**: Launch the app and enter a URL or search term in the address bar.
+2. **Customize**:
+   - Access **Settings** via the toolbar to adjust privacy, performance, or UI.
+   - Set your homepage, enable proxies, or tweak cache limits.
+3. **Shortcuts**:
+   - `Ctrl+T`: New tab
+   - `Ctrl+R`: Reload page
+   - `F11`: Fullscreen
+   - See all shortcuts below!
 
-We welcome contributions from the community! If you'd like to contribute to Mojo Browser, please follow these steps:
+---
 
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and commit them with descriptive messages.
-4.  Submit a pull request.
+## 🛠️ For Developers
 
-## License
+### Project Structure
+```
+Mojo-browser/
+├── main.py              # Main browser logic and UI
+├── MojoPrivacy.py       # Privacy, proxy, and anti-fingerprinting tools
+├── icons/               # Optional custom icons
+└── README.md            # This documentation
+```
 
-This project is licensed under the [MIT License](LICENSE).  
+### Core Modules
+- **PrivacyEngine**: Handles proxy rotation, tracker blocking, and fingerprint defense.
+- **MojoBrowser**: Drives the UI, tab system, and system tray integration.
+- **SettingsDialog**: Provides a rich customization interface.
 
-## Contact
+### Contributing
+We’d love your help! Here’s how to contribute:
+1. **Fork** the repo.
+2. **Branch**: Create a feature branch (`git checkout -b feature/YourFeature`).
+3. **Code**: Make changes with clear commits.
+   - Stick to PEP 8 style.
+   - Comment complex sections.
+4. **Test**: Verify functionality across platforms.
+5. **Push**: Submit your branch (`git push origin feature/YourFeature`).
+6. **Pull Request**: Open a PR with a clear explanation.
 
-*   Muhammad-Noraeii:  [https://Github.com/Muhammad-Noraeii](https://Github.com/Muhammad-Noraeii)
-*   Guguss-31: [https://Github.com/Guguss-31/](https://Github.com/Guguss-31/)
+---
+
+## 🔧 Configuration
+
+### Privacy Settings
+Adjust via the UI or edit the generated `privacy_settings.json`:
+```json
+{
+  "https_only": true,
+  "permissions": {
+    "example.com": {
+      "allow_cookies": false,
+      "allow_js": true
+    }
+  }
+}
+```
+
+### Proxy Setup
+Customize `PROXY_LIST` in `MojoPrivacy.py`:
+```python
+PROXY_LIST = ["proxy1.example.com:8080", "proxy2.example.com:3128"]
+```
+
+---
+
+## 📝 Keyboard Shortcuts
+
+| Shortcut         | Action                |
+|-------------------|-----------------------|
+| `Ctrl+T`         | New Tab              |
+| `Ctrl+W`         | Close Tab            |
+| `Ctrl+R` / `F5`  | Reload Page          |
+| `Ctrl+H`         | View History         |
+| `Ctrl+B`         | View Bookmarks       |
+| `Ctrl+Q`         | Exit Browser         |
+| `Ctrl+=`         | Zoom In              |
+| `Ctrl+-`         | Zoom Out             |
+| `F11`            | Fullscreen Toggle    |
+| `Ctrl+Shift+R`   | Reader Mode Toggle   |
+| `Ctrl+Shift+T`   | Reopen Last Tab      |
+
+---
+
+## 🌟 Future Plans
+
+- Pre-compiled binaries for all platforms
+- Extension framework
+- WebRTC leak prevention
+- Cloud-sync for bookmarks/settings
+- Performance benchmarking
+
+---
+
+## 👥 Credits
+
+- **[Muhammad Noraeii](https://github.com/Muhammad-Noraeii)** - Lead Developer
+- **[Guguss-31](https://github.com/Guguss-31)** - Core Contributor
+
+Thanks to the open-source community for fueling this project!
+
+---
+
+## 📜 License
+
+Released under the [MIT License](LICENSE).
+
+---
+
+## 💬 Contact
+
+- **Issues**: [Report bugs or suggest features](https://github.com/Muhammad-Noraeii/Mojo-browser/issues)
+- **Email**: Reach out at your-email@example.com
+- **Star Us**: Give a ⭐ on [GitHub](https://github.com/Muhammad-Noraeii/Mojo-browser)!
+
+---
+
+*Mojo Browser: Browse boldly, stay private, and enjoy the web your way.*
+
+---
