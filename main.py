@@ -13,6 +13,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngi
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from PyQt5.QtCore import QUrl, Qt, QSize, QTimer, QEvent, QRect, QDir
 from PyQt5.QtGui import QIcon, QKeySequence, QFont, QPalette, QColor, QDesktopServices
+import requests
 
 from MojoPrivacy import PrivacyEngine, PrivacyPage, initialize_privacy
 
@@ -362,6 +363,21 @@ class PrivacyInterceptor(QWebEngineUrlRequestInterceptor):
                 info.block(True)
         if settings["fingerprint_protection"]:
             info.setHttpHeader(b"User-Agent", b"MojoBrowser/0.2 (Generic)")
+            self.enhance_fingerprint_protection(info)
+
+    def enhance_fingerprint_protection(self, info):
+        if self.parent.settings_persistence.privacy_settings["fingerprint_protection"]:
+            # Randomize common fingerprinting headers
+            info.setHttpHeader(b"Accept-Language", b"en-US,en;q=0.9")
+            info.setHttpHeader(b"Accept", b"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            # Spoof screen resolution and other fingerprintable attributes via JS
+            js_spoof = """
+            Object.defineProperty(window, 'screen', {
+                value: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080 },
+                writable: false
+            });
+            """
+            self.parent.tabs.currentWidget().page().runJavaScript(js_spoof)
 
 class DownloadDialog(QDialog):
     def __init__(self, parent=None):
@@ -406,18 +422,30 @@ class DownloadDialog(QDialog):
         progress = QProgressBar()
         progress.setMaximum(100)
         progress.setMinimumWidth(150)
+        speed_label = QLabel("0 KB/s")
         cancel_button = QPushButton("Cancel")
-        cancel_button.setStyleSheet(self.parent_browser.get_button_style("#EF4444", "#F87171", "#DC2626"))
-        cancel_button.clicked.connect(lambda: download.cancel())
+        pause_button = QPushButton("Pause")
+        pause_button.setStyleSheet(self.parent_browser.get_button_style("#F59E0B", "#FBBF24", "#D97706"))
         download_layout.addWidget(label)
         download_layout.addWidget(progress)
+        download_layout.addWidget(speed_label)
+        download_layout.addWidget(pause_button)
         download_layout.addWidget(cancel_button)
         download_widget.setLayout(download_layout)
         self.downloads_layout.addWidget(download_widget)
         
-        download.downloadProgress.connect(lambda received, total, p=progress: p.setValue(int((received / total) * 100)))
+        last_received = [0]
+        def update_speed(received, total):
+            speed = (received - last_received[0]) / 1024  # KB/s
+            speed_label.setText(f"{speed:.1f} KB/s")
+            last_received[0] = received
+            progress.setValue(int((received / total) * 100))
+        
+        download.downloadProgress.connect(update_speed)
         download.finished.connect(lambda: self.on_download_finished(download, download_widget))
-        download.stateChanged.connect(lambda state: self.on_state_changed(state, download_widget))
+        download.stateChanged.connect(lambda state: self.on_state_changed(state, download_widget, pause_button))
+        cancel_button.clicked.connect(lambda: download.cancel())
+        pause_button.clicked.connect(lambda: download.pause() if download.state() == QWebEngineDownloadItem.DownloadInProgress else download.resume())
 
     def on_download_finished(self, download, widget):
         self.active_downloads -= 1
@@ -427,13 +455,17 @@ class DownloadDialog(QDialog):
         if self.active_downloads == 0:
             QTimer.singleShot(1000, self.close)
 
-    def on_state_changed(self, state, widget):
+    def on_state_changed(self, state, widget, pause_button):
         if state == QWebEngineDownloadItem.DownloadCancelled:
             self.active_downloads -= 1
             widget.findChild(QLabel).setText(f"{widget.findChild(QLabel).text()} - Cancelled")
-            widget.findChild(QPushButton).hide()
+            widget.findChild(QPushButton, "Cancel").hide()
             if self.active_downloads == 0:
                 QTimer.singleShot(1000, self.close)
+        elif state == QWebEngineDownloadItem.DownloadInterrupted:
+            pause_button.setText("Resume")
+        elif state == QWebEngineDownloadItem.DownloadInProgress:
+            pause_button.setText("Pause")
 
 class MojoBrowser(QMainWindow):
     DEFAULT_HOME_PAGE = "https://mojox.org/search"
@@ -456,6 +488,7 @@ class MojoBrowser(QMainWindow):
         self.cache_size_limit = "250 MB"
         self.downloads = {}
         self.download_dialog = None
+        self.profiles = {"Default": QWebEngineProfile.defaultProfile()}
 
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
@@ -485,6 +518,14 @@ class MojoBrowser(QMainWindow):
         self.performance_timer = QTimer(self)
         self.performance_timer.timeout.connect(self.optimize_performance)
         self.performance_timer.start(60000)
+
+        self.tab_suspension_timer = QTimer(self)
+        self.tab_suspension_timer.timeout.connect(self.suspend_inactive_tabs)
+        self.tab_suspension_timer.start(120000)  # Every 2 minutes
+
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.check_for_updates)
+        self.update_timer.start(86400000)  # Check daily
 
     def create_tabs(self):
         self.tabs = QTabWidget()
@@ -638,6 +679,16 @@ class MojoBrowser(QMainWindow):
             action.triggered.connect(connect)
             self.tool_bar.addAction(action)
 
+        reader_action = QAction(QIcon.fromTheme("document-preview"), "Reader Mode", self)
+        reader_action.setStatusTip("Toggle reader mode")
+        reader_action.triggered.connect(self.toggle_reader_mode)
+        self.tool_bar.addAction(reader_action)
+
+        profile_action = QAction(QIcon.fromTheme("system-users"), "Switch Profile", self)
+        profile_action.setStatusTip("Switch user profile")
+        profile_action.triggered.connect(self.switch_profile)
+        self.tool_bar.addAction(profile_action)
+
     def get_toolbar_style(self):
         theme = self.theme
         return (
@@ -702,6 +753,8 @@ class MojoBrowser(QMainWindow):
         browser.loadStarted.connect(lambda: self.statusBar().showMessage("Loading..."))
         browser.loadProgress.connect(lambda p: self.statusBar().showMessage(f"Loading... {p}%"))
         browser.loadFinished.connect(lambda ok, b=browser: self.load_finished(ok, b))
+        browser.page().setContextMenuPolicy(Qt.CustomContextMenu)
+        browser.page().customContextMenuRequested.connect(lambda pos: self.show_web_context_menu(pos, browser))
 
     def close_tab(self, index):
         if self.tabs.count() > 1:
@@ -806,7 +859,8 @@ class MojoBrowser(QMainWindow):
             ("Ctrl+-", self.zoom_out),
             ("F11", self.toggle_fullscreen),
             ("Ctrl+Tab", lambda: self.tabs.setCurrentIndex((self.tabs.currentIndex() + 1) % self.tabs.count())),
-            ("Ctrl+Shift+T", self.reopen_last_tab)
+            ("Ctrl+Shift+T", self.reopen_last_tab),
+            ("Ctrl+Shift+R", self.toggle_reader_mode),
         ]
         for key, func in shortcuts:
             shortcut = QAction(self)
@@ -933,6 +987,7 @@ class MojoBrowser(QMainWindow):
             browser = self.tabs.widget(i)
             if browser and browser != current_browser:
                 browser.page().runJavaScript("window.gc && window.gc();")
+        self.suspend_inactive_tabs()
 
     def closeEvent(self, event):
         if self.settings_persistence.privacy_settings["clear_data_on_exit"]:
@@ -960,6 +1015,70 @@ class MojoBrowser(QMainWindow):
             self.download_dialog.show()
         self.downloads[download] = download
         self.download_dialog.add_download(download)
+
+    def suspend_inactive_tabs(self):
+        current_browser = self.tabs.currentWidget()
+        for i in range(self.tabs.count()):
+            browser = self.tabs.widget(i)
+            if browser and browser != current_browser and not self.tabs.tabText(i).startswith("📍"):
+                browser.page().setLifecycleState(QWebEnginePage.LifecycleState.Discarded)
+                browser.page().setBackgroundColor(QColor(self.theme == "Dark" and DARK_MODE_BACKGROUND or LIGHT_MODE_BACKGROUND))
+
+    def toggle_reader_mode(self):
+        browser = self.tabs.currentWidget()
+        if not browser:
+            return
+        reader_js = """
+        (function() {
+            document.body.innerHTML = '<div id="reader-content" style="max-width: 800px; margin: 20px auto; font-size: 18px; line-height: 1.6;">' + 
+            document.querySelector('article')?.innerHTML || document.body.innerHTML + '</div>';
+            document.body.style.backgroundColor = '#f5f5f5';
+            document.body.style.padding = '20px';
+            document.querySelectorAll('script, style, img:not(:first-child)').forEach(el => el.remove());
+        })();
+        """
+        browser.page().runJavaScript(reader_js)
+        self.statusBar().showMessage("Reader Mode Enabled", 2000)
+
+    def switch_profile(self):
+        profile_name, ok = QInputDialog.getItem(self, "Switch Profile", "Select Profile:", list(self.profiles.keys()) + ["New Profile"], 0, False)
+        if not ok:
+            return
+        if profile_name == "New Profile":
+            profile_name, ok = QInputDialog.getText(self, "New Profile", "Profile Name:")
+            if ok and profile_name and profile_name not in self.profiles:
+                self.profiles[profile_name] = QWebEngineProfile(profile_name, self)
+        if profile_name in self.profiles:
+            browser = self.tabs.currentWidget()
+            if browser:
+                browser.setPage(PrivacyPage(self.profiles[profile_name], browser))
+                self.apply_webengine_settings(browser)
+                self.statusBar().showMessage(f"Switched to profile: {profile_name}", 2000)
+
+    def check_for_updates(self):
+        try:
+            response = requests.get("https://api.github.com/repos/Muhammad-Noraeii/MojoBrowser/releases/latest")
+            latest_version = response.json()["tag_name"]
+            current_version = "v0.2.4"
+            if latest_version > current_version:
+                if QMessageBox.question(self, "Update Available", f"Version {latest_version} is available. Update now?", QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+                    QDesktopServices.openUrl(QUrl("https://github.com/Muhammad-Noraeii/MojoBrowser/releases/latest"))
+        except Exception as e:
+            self.statusBar().showMessage(f"Update check failed: {str(e)}", 5000)
+
+    def show_web_context_menu(self, pos, browser):
+        menu = QMenu(self)
+        menu.setStyleSheet(
+            f"QMenu {{ background-color: {DARK_MODE_ACCENT if self.theme == 'Dark' else LIGHT_MODE_ACCENT}; "
+            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 16px; }}"
+            f"QMenu::item:selected {{ background-color: {PRIMARY_COLOR}; color: {TEXT_COLOR}; }}"
+        )
+        menu.addAction("Back", self.browser_back)
+        menu.addAction("Forward", self.browser_forward)
+        menu.addAction("Reload", self.browser_reload)
+        menu.addAction("Copy URL", lambda: QApplication.clipboard().setText(browser.url().toString()))
+        menu.addAction("Save Page As...", lambda: browser.page().save(f"{self.download_path}/page.html", QWebEngineDownloadItem.SingleHtmlSaveFormat))
+        menu.exec_(browser.mapToGlobal(pos))
 
 class SettingsPersistence:
     def __init__(self, parent):
