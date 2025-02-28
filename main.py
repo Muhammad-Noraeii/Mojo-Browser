@@ -5,12 +5,13 @@ import re
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QLineEdit,
     QPushButton, QHBoxLayout, QLabel, QComboBox, QDialog, QFormLayout, QTabWidget, QTextEdit, QCheckBox,
-    QFileDialog, QMessageBox, QListWidget, QListWidgetItem, QProgressDialog, QToolBar, QStatusBar,
-    QAction, QStyle, QSizePolicy, QSpacerItem, QScrollArea, QInputDialog, QMenu, QSystemTrayIcon
+    QFileDialog, QMessageBox, QListWidget, QListWidgetItem, QToolBar, QStatusBar,
+    QAction, QStyle, QSizePolicy, QSpacerItem, QScrollArea, QInputDialog, QMenu, QSystemTrayIcon,
+    QProgressBar, QDialogButtonBox
 )
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEnginePage, QWebEngineSettings
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEnginePage, QWebEngineSettings, QWebEngineDownloadItem
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PyQt5.QtCore import QUrl, Qt, QSize, QTimer, QThread, pyqtSignal, QEvent, QRect
+from PyQt5.QtCore import QUrl, Qt, QSize, QTimer, QEvent, QRect, QDir
 from PyQt5.QtGui import QIcon, QKeySequence, QFont, QPalette, QColor, QDesktopServices
 
 from MojoPrivacy import PrivacyEngine, PrivacyPage, initialize_privacy
@@ -33,129 +34,6 @@ BUTTON_PRESSED_COLOR = "#2563EB"
 
 UI_FONT = QFont("Nunito", 16)
 FALLBACK_FONT = QFont("Arial", 16)
-
-class DownloadWorker(QThread):
-    progress = pyqtSignal(int, int)
-    finished = pyqtSignal(str, bool)
-    speed = pyqtSignal(float)
-    
-    def __init__(self, download_item):
-        super().__init__()
-        self.download_item = download_item
-        self.start_time = None
-        
-    def run(self):
-        import time
-        self.start_time = time.time()
-        self.download_item.downloadProgress.connect(self.update_progress)
-        self.download_item.finished.connect(self.finish_download)
-        
-    def update_progress(self, bytes_received, bytes_total):
-        current_time = time.time()
-        elapsed = current_time - self.start_time
-        if elapsed > 0:
-            speed = (bytes_received / 1024 / 1024) / elapsed
-            self.speed.emit(speed)
-        self.progress.emit(bytes_received, bytes_total)
-        
-    def finish_download(self):
-        self.finished.emit(
-            self.download_item.path(),
-            self.download_item.isFinished() and not self.download_item.isPaused()
-        )
-
-class DownloadHandler:
-    def __init__(self, browser):
-        self.browser = browser
-        self.current_downloads = []
-        self.download_history = []
-        self.browser.page().profile().downloadRequested.connect(self.handle_download)
-
-    def handle_download(self, download_item):
-        save_path, _ = QFileDialog.getSaveFileName(None, "Save File As", download_item.path(), "All Files (*)")
-        if save_path:
-            download_item.setPath(save_path)
-            download_item.accept()
-            progress_dialog = QProgressDialog(f"Downloading {os.path.basename(save_path)}...", "Cancel", 0, 100)
-            progress_dialog.setWindowTitle(f"Download Progress ({len(self.current_downloads) + 1})")
-            progress_dialog.setWindowModality(Qt.WindowModal)
-            progress_dialog.canceled.connect(download_item.cancel)
-            progress_dialog.setFont(UI_FONT)
-            progress_dialog.setStyleSheet(f"""
-                QProgressDialog {{
-                    background-color: {DARK_MODE_BACKGROUND if self.browser.theme == 'Dark' else LIGHT_MODE_BACKGROUND};
-                    color: {DARK_MODE_TEXT if self.browser.theme == 'Dark' else LIGHT_MODE_TEXT};
-                    border-radius: {BORDER_RADIUS};
-                    padding: 15px;
-                    min-width: 300px;
-                }}
-                QProgressBar {{
-                    border: 1px solid {PRIMARY_COLOR};
-                    border-radius: 5px;
-                    text-align: center;
-                }}
-                QPushButton {{
-                    background-color: {PRIMARY_COLOR};
-                    color: {TEXT_COLOR};
-                    border-radius: {BUTTON_BORDER_RADIUS};
-                    padding: 10px 20px;
-                    font-size: 16px; 
-                }}
-                QPushButton:hover {{ background-color: {BUTTON_HOVER_COLOR}; }}
-                QPushButton:pressed {{ background-color: {BUTTON_PRESSED_COLOR}; }}
-            """)
-            
-            worker = DownloadWorker(download_item)
-            worker.progress.connect(lambda br, bt: self.show_download_progress(progress_dialog, br, bt))
-            worker.speed.connect(lambda s: progress_dialog.setLabelText(
-                f"Downloading {os.path.basename(save_path)}... ({s:.2f} MB/s)"
-            ))
-            worker.finished.connect(lambda sp, s: self.download_finished(progress_dialog, sp, s))
-            self.current_downloads.append((download_item, worker, progress_dialog))
-            self.download_history.append({
-                "path": save_path,
-                "time": QTimer().singleShot(0, lambda: None).parent().currentTime().toString()
-            })
-            worker.start()
-            progress_dialog.show()
-
-    def show_download_progress(self, dialog, bytes_received, bytes_total):
-        if bytes_total > 0:
-            dialog.setValue(int((bytes_received / bytes_total) * 100))
-
-    def download_finished(self, dialog, save_path, success):
-        dialog.close()
-        if success:
-            msg = QMessageBox.information(None, "Download Complete", 
-                f"File downloaded to: {save_path}\nOpen file?", 
-                QMessageBox.Yes | QMessageBox.No)
-            if msg == QMessageBox.Yes:
-                QDesktopServices.openUrl(QUrl.fromLocalFile(save_path))
-        else:
-            QMessageBox.warning(None, "Download Failed", "The download was canceled or failed.", QMessageBox.Ok)
-        if self.current_downloads:
-            self.current_downloads.pop(0)
-
-    def view_download_history(self):
-        dialog = QDialog(self.browser)
-        dialog.setWindowTitle("Download History")
-        dialog.setGeometry(300, 300, 400, 300)
-        layout = QVBoxLayout(dialog)
-        history_list = QListWidget()
-        theme = self.browser.theme
-        for item in self.download_history:
-            list_item = QListWidgetItem(f"{item['time']} - {os.path.basename(item['path'])}")
-            list_item.setData(Qt.UserRole, item['path'])
-            history_list.addItem(list_item)
-        history_list.itemDoubleClicked.connect(lambda item: QDesktopServices.openUrl(
-            QUrl.fromLocalFile(item.data(Qt.UserRole))))
-        history_list.setStyleSheet(self.browser.get_list_style())
-        layout.addWidget(history_list)
-        close_button = QPushButton("Close")
-        close_button.setStyleSheet(self.browser.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
-        close_button.clicked.connect(dialog.accept)
-        layout.addWidget(close_button)
-        dialog.exec_()
 
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
@@ -360,12 +238,11 @@ class SettingsDialog(QDialog):
             "Mojo Browser | v0.2.4 Enhanced\n\n"
             "Developed using PyQt5 & Python.\nEnhanced Features:\n"
             "- Dark/Light/System themes\n- Multiple search engines\n- Advanced security options\n"
-            "- Performance optimizations\n- Download manager with history\n- Proxy & fingerprint protection\n"
+            "- Performance optimizations\n- Proxy & fingerprint protection\n"
             "- System tray integration\n- Improved UI/UX\n\n"
             "GitHub: https://Github.com/Muhammad-Noraeii\nhttps://Github.com/Guguss-31/"
         )
         layout.addWidget(self.about_text)
-        
 
     def preview_theme(self, theme):
         temp_theme = theme if theme != "System" else ("Dark" if QApplication.palette().color(QPalette.Window).lightness() < 128 else "Light")
@@ -486,6 +363,78 @@ class PrivacyInterceptor(QWebEngineUrlRequestInterceptor):
         if settings["fingerprint_protection"]:
             info.setHttpHeader(b"User-Agent", b"MojoBrowser/0.2 (Generic)")
 
+class DownloadDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Downloads")
+        self.setGeometry(300, 300, 450, 350)
+        self.active_downloads = 0
+        self.parent_browser = parent  # Explicitly store the parent (MojoBrowser)
+        self.layout = QVBoxLayout()
+        self.downloads_layout = QVBoxLayout()
+        self.scroll_area = QScrollArea()
+        self.scroll_widget = QWidget()
+        self.scroll_widget.setLayout(self.downloads_layout)
+        self.scroll_area.setWidget(self.scroll_widget)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet(f"QScrollArea {{ border: 1px solid {'#4B5563' if parent.theme == 'Dark' else '#D1D5DB'}; border-radius: {BORDER_RADIUS}; }}")
+        self.layout.addWidget(self.scroll_area)
+
+        self.button_layout = QHBoxLayout()
+        self.close_button = QPushButton("Close")
+        self.close_button.setStyleSheet(parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
+        self.close_button.clicked.connect(self.close)
+        self.button_layout.addStretch()
+        self.button_layout.addWidget(self.close_button)
+        self.layout.addLayout(self.button_layout)
+
+        self.setLayout(self.layout)
+        self.setStyleSheet(
+            f"QDialog {{ background-color: {DARK_MODE_BACKGROUND if parent.theme == 'Dark' else LIGHT_MODE_BACKGROUND}; "
+            f"color: {DARK_MODE_TEXT if parent.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 10px; }}"
+            f"QLabel {{ font-size: 14px; padding: 5px; }}"
+            f"QProgressBar {{ border: 1px solid {'#4B5563' if parent.theme == 'Dark' else '#D1D5DB'}; border-radius: 5px; text-align: center; }}"
+            "QProgressBar::chunk { background-color: #3B82F6; border-radius: 3px; }"
+        )
+
+    def add_download(self, download):
+        self.active_downloads += 1
+        download_widget = QWidget()
+        download_layout = QHBoxLayout()
+        label = QLabel(download.suggestedFileName())
+        label.setMinimumWidth(200)
+        progress = QProgressBar()
+        progress.setMaximum(100)
+        progress.setMinimumWidth(150)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setStyleSheet(self.parent_browser.get_button_style("#EF4444", "#F87171", "#DC2626"))
+        cancel_button.clicked.connect(lambda: download.cancel())
+        download_layout.addWidget(label)
+        download_layout.addWidget(progress)
+        download_layout.addWidget(cancel_button)
+        download_widget.setLayout(download_layout)
+        self.downloads_layout.addWidget(download_widget)
+        
+        download.downloadProgress.connect(lambda received, total, p=progress: p.setValue(int((received / total) * 100)))
+        download.finished.connect(lambda: self.on_download_finished(download, download_widget))
+        download.stateChanged.connect(lambda state: self.on_state_changed(state, download_widget))
+
+    def on_download_finished(self, download, widget):
+        self.active_downloads -= 1
+        if download.state() == QWebEngineDownloadItem.DownloadCompleted:
+            widget.findChild(QLabel).setText(f"{download.suggestedFileName()} - Completed")
+            widget.findChild(QPushButton).hide()
+        if self.active_downloads == 0:
+            QTimer.singleShot(1000, self.close)
+
+    def on_state_changed(self, state, widget):
+        if state == QWebEngineDownloadItem.DownloadCancelled:
+            self.active_downloads -= 1
+            widget.findChild(QLabel).setText(f"{widget.findChild(QLabel).text()} - Cancelled")
+            widget.findChild(QPushButton).hide()
+            if self.active_downloads == 0:
+                QTimer.singleShot(1000, self.close)
+
 class MojoBrowser(QMainWindow):
     DEFAULT_HOME_PAGE = "https://mojox.org/search"
 
@@ -505,9 +454,8 @@ class MojoBrowser(QMainWindow):
         self.hardware_acceleration = True
         self.preload_pages = False
         self.cache_size_limit = "250 MB"
-        
-        temp_browser = QWebEngineView()
-        self.download_handler = DownloadHandler(temp_browser)
+        self.downloads = {}
+        self.download_dialog = None
 
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
@@ -518,6 +466,7 @@ class MojoBrowser(QMainWindow):
         self.create_tool_bar()
         self.create_tabs()
         self.setup_system_tray()
+        self.setup_download_manager()
 
         self.settings_persistence.load_settings()
         self.add_new_tab(QUrl(self.home_page))
@@ -679,7 +628,6 @@ class MojoBrowser(QMainWindow):
             (None, "emblem-favorite", "Bookmark", "Bookmark page", self.settings_persistence.add_bookmark),
             (None, "bookmarks", "Bookmarks", "View bookmarks", self.settings_persistence.view_bookmarks),
             (None, "document-open-recent", "History", "View history", self.settings_persistence.view_history),
-            (None, "download", "Downloads", "View downloads", self.download_handler.view_download_history),
             ("settings.png", "preferences-system", "Settings", "Open settings", self.open_settings),
         ]
         
@@ -754,7 +702,6 @@ class MojoBrowser(QMainWindow):
         browser.loadStarted.connect(lambda: self.statusBar().showMessage("Loading..."))
         browser.loadProgress.connect(lambda p: self.statusBar().showMessage(f"Loading... {p}%"))
         browser.loadFinished.connect(lambda ok, b=browser: self.load_finished(ok, b))
-        self.download_handler = DownloadHandler(browser)
 
     def close_tab(self, index):
         if self.tabs.count() > 1:
@@ -996,6 +943,23 @@ class MojoBrowser(QMainWindow):
             event.ignore()
         else:
             super().closeEvent(event)
+
+    def setup_download_manager(self):
+        self.download_path = QDir.homePath() + "/Downloads"
+        if not os.path.exists(self.download_path):
+            os.makedirs(self.download_path)
+        profile = QWebEngineProfile.defaultProfile()
+        profile.downloadRequested.connect(self.handle_download)
+
+    def handle_download(self, download):
+        suggested_path = os.path.join(self.download_path, download.suggestedFileName())
+        download.setPath(suggested_path)
+        download.accept()
+        if not self.download_dialog or not self.download_dialog.isVisible():
+            self.download_dialog = DownloadDialog(self)
+            self.download_dialog.show()
+        self.downloads[download] = download
+        self.download_dialog.add_download(download)
 
 class SettingsPersistence:
     def __init__(self, parent):
