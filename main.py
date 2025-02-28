@@ -521,11 +521,10 @@ class MojoBrowser(QMainWindow):
 
         self.tab_suspension_timer = QTimer(self)
         self.tab_suspension_timer.timeout.connect(self.suspend_inactive_tabs)
-        self.tab_suspension_timer.start(120000)  # Every 2 minutes
-
+        self.tab_suspension_timer.start(120000)  
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.check_for_updates)
-        self.update_timer.start(86400000)  # Check daily
+        self.update_timer.start(86400000)  
 
     def create_tabs(self):
         self.tabs = QTabWidget()
@@ -753,8 +752,9 @@ class MojoBrowser(QMainWindow):
         browser.loadStarted.connect(lambda: self.statusBar().showMessage("Loading..."))
         browser.loadProgress.connect(lambda p: self.statusBar().showMessage(f"Loading... {p}%"))
         browser.loadFinished.connect(lambda ok, b=browser: self.load_finished(ok, b))
-        browser.page().setContextMenuPolicy(Qt.CustomContextMenu)
-        browser.page().customContextMenuRequested.connect(lambda pos: self.show_web_context_menu(pos, browser))
+        
+        browser.setContextMenuPolicy(Qt.CustomContextMenu)
+        browser.customContextMenuRequested.connect(lambda pos: self.show_web_context_menu(pos, browser))
 
     def close_tab(self, index):
         if self.tabs.count() > 1:
@@ -1028,16 +1028,73 @@ class MojoBrowser(QMainWindow):
         browser = self.tabs.currentWidget()
         if not browser:
             return
+        
+        if not self.javascript_enabled:
+            QMessageBox.warning(self, "JavaScript Disabled", "Reader Mode requires JavaScript to be enabled. Please enable it in Settings.", QMessageBox.Ok)
+            return
+
+        if hasattr(browser, 'reader_mode_active') and browser.reader_mode_active:
+            restore_js = """
+            document.body.innerHTML = document.querySelector('#original-content').innerHTML;
+            document.querySelector('#original-content').remove();
+            document.body.style.backgroundColor = '';
+            document.body.style.padding = '';
+            """
+            browser.page().runJavaScript(restore_js)
+            browser.reader_mode_active = False
+            self.statusBar().showMessage("Reader Mode Disabled", 2000)
+            return
+
+        store_content_js = """
+        if (!document.querySelector('#original-content')) {
+            const originalContent = document.createElement('div');
+            originalContent.id = 'original-content';
+            originalContent.innerHTML = document.body.innerHTML;
+            document.body.appendChild(originalContent);
+        }
+        """
+        browser.page().runJavaScript(store_content_js)
+
         reader_js = """
         (function() {
-            document.body.innerHTML = '<div id="reader-content" style="max-width: 800px; margin: 20px auto; font-size: 18px; line-height: 1.6;">' + 
-            document.querySelector('article')?.innerHTML || document.body.innerHTML + '</div>';
+            let content = document.querySelector('article, main, .content, .article') || document.body;
+            if (!content) {
+                content = document.body;
+            }
+
+            const unwanted = ['script', 'style', 'nav', 'header', 'footer', 'aside', 'form', 'button', 'input', '.ad', '.advertisement'];
+            unwanted.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => el.remove());
+            });
+
+            document.querySelectorAll('img').forEach((img, index) => {
+                if (index > 5) img.remove(); 
+            });
+
+            // Create reader-friendly content
+            const readerContent = document.createElement('div');
+            readerContent.id = 'reader-content';
+            readerContent.innerHTML = content.innerHTML;
+
+            readerContent.style.maxWidth = '800px';
+            readerContent.style.margin = '20px auto';
+            readerContent.style.fontSize = '18px';
+            readerContent.style.lineHeight = '1.6';
+            readerContent.style.fontFamily = 'Georgia, Times, serif';
+            readerContent.style.color = '#333';
+            readerContent.style.backgroundColor = '#fff';
+            readerContent.style.padding = '20px';
+            readerContent.style.borderRadius = '8px';
+            readerContent.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+
+            document.body.innerHTML = '';
+            document.body.appendChild(readerContent);
             document.body.style.backgroundColor = '#f5f5f5';
             document.body.style.padding = '20px';
-            document.querySelectorAll('script, style, img:not(:first-child)').forEach(el => el.remove());
         })();
         """
         browser.page().runJavaScript(reader_js)
+        browser.reader_mode_active = True
         self.statusBar().showMessage("Reader Mode Enabled", 2000)
 
     def switch_profile(self):
