@@ -1,5 +1,4 @@
-### First Please Star Repo. Thank!
----
+
 
 # Mojo Browser
 
@@ -108,7 +107,7 @@ We welcome contributions! Here's how to get started:
    ```
 6. **Submit a Pull Request**: Open a PR on the main repo.
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md)  for more details.
+Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
 ---
 
