@@ -1,86 +1,136 @@
-<div align="center">
-   <img src="https://github.com/Muhammad-Noraeii/Mojo-Browser/blob/main/datas/browser.png?raw=true"/>
-</div>
+### First Please Star Repo. Thank!
+---
 
-# Mojo Browser - Advanced Python Browser
-<img width="960" alt="New" src="https://github.com/user-attachments/assets/e10c437c-0087-4972-9fdd-d90ca34fcc8f" />
+# Mojo Browser
 
-## Overview
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/downloads/)
+[![PyQt5](https://img.shields.io/badge/PyQt5-5.15-green)](https://pypi.org/project/PyQt5/)
+[![GitHub Issues](https://img.shields.io/github/issues/Muhammad-Noraeii/Mojo-Browser)](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/Muhammad-Noraeii/Mojo-Browser)](https://github.com/Muhammad-Noraeii/Mojo-Browser/stargazers)
 
-Mojo Browser is a cutting-edge web browser developed entirely in Python using the PyQt5 framework. It aims to provide a modern, feature-rich browsing experience with a focus on customization, security, and user-friendly design.  Whether you're a seasoned developer or a casual internet surfer, Mojo Browser offers a unique blend of control and convenience.
+A privacy-centric, lightweight web browser built with Python and PyQt5. Mojo Browser offers robust security features, extension support, and a modern, customizable interface.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+- [Contact](#contact)
+
+---
 
 ## Features
 
-*   **Modern UI:**  Sleek and intuitive interface built with PyQt5, offering a visually appealing and easy-to-navigate experience.
-*   **Tabbed Browsing:**  Open multiple websites simultaneously with an efficient tab management system.
-*   **Customizable Themes:**  Switch between Dark and Light themes to suit your preferences.
-*   **Multiple Search Engines:** Choose your preferred search engine from Google, Bing, DuckDuckGo, and Yahoo.
-*   **Advanced Security Settings:**  Fine-tune your browsing experience with options to control JavaScript, pop-up blocking, and mixed content.
-*   **Data Management Tools:**  Clear your cache, cookies, and browsing history with ease.
-*   **Bookmark Management:**  Save and organize your favorite websites for quick access.
-*   **Browsing History:**  Keep track of your online activity with a comprehensive history feature.
-*   **Downloads:** Download files directly through the browser with a progress indicator.
+- **Privacy & Security**: Tracker blocking, proxy support, HTTPS enforcement, and anti-fingerprinting.
+- **Extensions**: Load JavaScript extensions from MojoX or custom sources.
+- **Themes**: Dark, Light, or System theme options.
+- **Performance**: Hardware acceleration, tab suspension, and configurable cache limits.
+- **Search Engines**: Supports Google, DuckDuckGo, Mojeek, and more.
+- **Extras**: Reader mode, bookmarks, history, and download manager.
 
-## Technologies Used
-
-*   **Python:** The core programming language.
-*   **PyQt5:**  A powerful GUI framework for creating the browser's user interface.
-*   **QtWebEngineWidgets:**  A component of PyQt5 that provides web browsing functionality based on Chromium.
+---
 
 ## Installation
 
-1.  **Prerequisites:**
+### Prerequisites
+- **Python**: 3.8 or higher
+- **Dependencies**: PyQt5, PyQtWebEngine, Requests
 
-    *   Python 3.6 or higher
-    *   PyQt5
-    *   PyQtWebEngine
+### Steps
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Muhammad-Noraeii/Mojo-Browser.git
+   cd Mojo-Browser
+   ```
 
-    You can install PyQt5 and PyQtWebEngine using pip:
+2. **Install Dependencies**:
+   ```bash
+   pip install PyQt5 PyQtWebEngine requests
+   ```
+   Alternatively, if a `requirements.txt` is added:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-    ```bash
-    pip install PyQt5 PyQtWebEngine
-    ```
+3. **Run the Browser**:
+   ```bash
+   python main.py
+   ```
 
-2.  **Download the Code:**
+4. **Optional**: Add icons to an `icons/` folder (e.g., `app_icon.png`) for full UI experience.
 
-    Clone this repository to your local machine:
-
-    ```bash
-    git clone https://github.com/Muhammad-Noraeii/Mojo-Browser.git
-    cd Mojo-Browser
-    ```
-
-3.  **Run the Browser:**
-
-    Execute the `main.py` file:
-
-    ```bash
-    python main.py
-    ```
+---
 
 ## Usage
 
-*   **Navigation:** Use the toolbar buttons (Back, Forward, Reload, Home) to navigate the web.
-*   **Address Bar:**  Enter a URL in the address bar and press Enter to load the page.  If you enter a search query instead of a URL, the browser will use your selected search engine.
-*   **Tabs:**  Click the "New Tab" button to open a new tab. Close tabs by clicking the "x" on the tab.
-*   **Bookmarks:**  Click the "Bookmark" button to add the current page to your bookmarks. Access your bookmarks by clicking the "View Bookmarks" button.
-*   **History:**  View your browsing history by clicking the "History" button.
-*   **Settings:**  Customize your browsing experience by clicking the "Settings" button.
+- Launch the browser with `python main.py`.
+- Use the toolbar to navigate, manage tabs, or access settings.
+- Configure privacy options, themes, and extensions via the Settings menu.
+- Double-click bookmarks or history items to visit saved URLs.
+
+For detailed controls, check the [shortcuts](#shortcuts) section below.
+
+### Shortcuts
+- `Ctrl+T`: New tab
+- `Ctrl+W`: Close tab
+- `Ctrl+R` or `F5`: Reload page
+- `F11`: Toggle fullscreen
+- `Ctrl+Shift+R`: Toggle reader mode
+
+---
 
 ## Contributing
 
-We welcome contributions from the community! If you'd like to contribute to Mojo Browser, please follow these steps:
+We welcome contributions! Here's how to get started:
 
-1.  Fork the repository.
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and commit them with descriptive messages.
-4.  Submit a pull request.
+1. **Fork the Repository**: Click "Fork" on GitHub.
+2. **Clone Your Fork**:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/Mojo-Browser.git
+   ```
+3. **Create a Branch**:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+4. **Commit Changes**:
+   ```bash
+   git commit -m "Add your message here"
+   ```
+5. **Push to Your Fork**:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+6. **Submit a Pull Request**: Open a PR on the main repo.
+
+Please read our [Contributing Guidelines](CONTRIBUTING.md)  for more details.
+
+---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).  
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgements
+
+- **PyQt5 Team**: For the powerful GUI framework.
+- **Contributors**: [Muhammad-Noraeii](https://github.com/Muhammad-Noraeii), [Guguss-31](https://github.com/Guguss-31).
+- **Community**: Thanks to all users and testers!
+
+---
 
 ## Contact
 
-*   Muhammad-Noraeii:  [https://Github.com/Muhammad-Noraeii](https://Github.com/Muhammad-Noraeii)
-*   Guguss-31: [https://Github.com/Guguss-31/](https://Github.com/Guguss-31/)
+- **Maintainer**: [Muhammad Noraeii](https://github.com/Muhammad-Noraeii)
+- **Issues**: Report bugs or suggest features [here](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues).
+- **Email**: (Add your email if desired, e.g., muhammad.noraeii@example.com)
+
+Star the project if you like it! ⭐
+

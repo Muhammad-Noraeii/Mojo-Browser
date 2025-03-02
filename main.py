@@ -15,6 +15,7 @@ from PyQt5.QtCore import QUrl, Qt, QSize, QTimer, QEvent, QRect, QDir
 from PyQt5.QtGui import QIcon, QKeySequence, QFont, QPalette, QColor, QDesktopServices
 import requests
 
+from addon import ExtensionManager
 from MojoPrivacy import PrivacyEngine, PrivacyPage, initialize_privacy
 
 PRIMARY_COLOR = "#3B82F6"
@@ -28,20 +29,173 @@ DARK_MODE_ACCENT = "#1F2A44"
 LIGHT_MODE_BACKGROUND = "#FFFFFF"
 LIGHT_MODE_TEXT = "#1F2937"
 LIGHT_MODE_ACCENT = "#F3F4F6"
-BORDER_RADIUS = "10px"
-BUTTON_BORDER_RADIUS = "6px"
+BORDER_RADIUS = "8px"
+BUTTON_BORDER_RADIUS = "5px"
 BUTTON_HOVER_COLOR = "#60A5FA"
 BUTTON_PRESSED_COLOR = "#2563EB"
 
-UI_FONT = QFont("Nunito", 16)
-FALLBACK_FONT = QFont("Arial", 16)
+UI_FONT = QFont("Nunito", 14)
+FALLBACK_FONT = QFont("Arial", 14)
+
+class ExtensionsDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.setWindowTitle("Extensions")
+        self.setGeometry(300, 300, 450, 350)
+        self.setFont(UI_FONT)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
+
+        self.extensions_list = QListWidget()
+        self.extensions_list.setStyleSheet(self.parent.get_list_style())
+        self.parent.extension_manager.load_extensions()
+        for ext_name in self.parent.extension_manager.extensions.keys():
+            item = QListWidgetItem(ext_name)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Checked if self.parent.extension_manager.extension_status.get(ext_name) == 'enabled' else Qt.Unchecked)
+            self.extensions_list.addItem(item)
+        layout.addWidget(self.extensions_list)
+
+        buttons_layout = QHBoxLayout()
+        enable_button = QPushButton("Enable")
+        enable_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
+        enable_button.clicked.connect(self.enable_selected_extension)
+        disable_button = QPushButton("Disable")
+        disable_button.setStyleSheet(self.parent.get_button_style("#EF4444", "#F87171", "#DC2626"))
+        disable_button.clicked.connect(self.disable_selected_extension)
+        download_button = QPushButton("Download")
+        download_button.setStyleSheet(self.parent.get_button_style(ACCENT_COLOR, "#FBBF24", "#D97706"))
+        download_button.clicked.connect(self.download_extension)
+        store_button = QPushButton("Get from MojoX")
+        store_button.setStyleSheet(self.parent.get_button_style(ACCENT_COLOR, "#FBBF24", "#D97706"))
+        store_button.clicked.connect(self.fetch_store_extensions)
+        buttons_layout.addWidget(enable_button)
+        buttons_layout.addWidget(disable_button)
+        buttons_layout.addWidget(download_button)
+        buttons_layout.addWidget(store_button)
+        buttons_layout.addStretch()
+        layout.addLayout(buttons_layout)
+
+        close_button = QPushButton("Close")
+        close_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
+        close_button.clicked.connect(self.close_dialog)
+        layout.addWidget(close_button)
+
+        self.setLayout(layout)
+
+    def enable_selected_extension(self):
+        selected = self.extensions_list.currentItem()
+        if selected and selected.checkState() != Qt.Checked:
+            ext_name = selected.text()
+            self.parent.extension_manager.enable_extension(ext_name)
+            selected.setCheckState(Qt.Checked)
+
+    def disable_selected_extension(self):
+        selected = self.extensions_list.currentItem()
+        if selected and selected.checkState() == Qt.Checked:
+            ext_name = selected.text()
+            self.parent.extension_manager.disable_extension(ext_name)
+            selected.setCheckState(Qt.Unchecked)
+
+    def download_extension(self):
+        url, ok = QInputDialog.getText(self, "Download Extension", "Enter the URL of the .js extension:")
+        if ok and url:
+            ext_name = self.parent.extension_manager.download_extension(url)
+            if ext_name:
+                item = QListWidgetItem(ext_name)
+                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+                item.setCheckState(Qt.Unchecked)
+                self.extensions_list.addItem(item)
+
+    def fetch_store_extensions(self):
+        extensions = self.parent.extension_manager.fetch_store_extensions()
+        if not extensions:
+            return
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle("MojoX Extension Store")
+        dialog.setGeometry(300, 300, 600, 400)
+        layout = QVBoxLayout()
+
+        store_list = QListWidget()
+        store_list.setSpacing(5)
+
+        for ext in extensions:
+            item_widget = QWidget()
+            item_layout = QHBoxLayout()
+            item_layout.setContentsMargins(5, 5, 5, 5)
+
+            text_widget = QWidget()
+            text_layout = QVBoxLayout()
+            name_label = QLabel(ext["name"])
+            name_label.setStyleSheet("font-weight: bold; font-size: 14px;")
+            desc_label = QLabel(ext["description"])
+            desc_label.setWordWrap(True)
+            desc_label.setStyleSheet("font-size: 12px;")
+            author_label = QLabel(f"By: {ext['author']}")
+            author_label.setStyleSheet("font-size: 10px; color: #888;")
+            text_layout.addWidget(name_label)
+            text_layout.addWidget(desc_label)
+            text_layout.addWidget(author_label)
+            text_widget.setLayout(text_layout)
+            item_layout.addWidget(text_widget)
+
+            checkbox = QCheckBox()
+            item_layout.addWidget(checkbox)
+
+            item_widget.setLayout(item_layout)
+
+            item = QListWidgetItem()
+            item.setSizeHint(item_widget.sizeHint())
+            item.setData(Qt.UserRole, ext["url"])
+            item.setData(Qt.UserRole + 1, ext["name"])
+            store_list.addItem(item)
+            store_list.setItemWidget(item, item_widget)
+
+        layout.addWidget(store_list)
+
+        download_button = QPushButton("Download Selected")
+        download_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
+        download_button.clicked.connect(lambda: self.download_selected_extensions(store_list, dialog))
+        layout.addWidget(download_button)
+
+        dialog.setLayout(layout)
+        dialog.exec_()
+
+    def download_selected_extensions(self, store_list, dialog):
+        for i in range(store_list.count()):
+            item = store_list.item(i)
+            checkbox = store_list.itemWidget(item).findChild(QCheckBox)
+            if checkbox and checkbox.isChecked():
+                url = item.data(Qt.UserRole)
+                ext_name = self.parent.extension_manager.download_extension(url)
+                if ext_name:
+                    list_item = QListWidgetItem(ext_name)
+                    list_item.setFlags(list_item.flags() | Qt.ItemIsUserCheckable)
+                    list_item.setCheckState(Qt.Unchecked)
+                    self.extensions_list.addItem(list_item)
+        dialog.accept()
+
+    def close_dialog(self):
+        for i in range(self.extensions_list.count()):
+            item = self.extensions_list.item(i)
+            ext_name = item.text()
+            is_enabled = item.checkState() == Qt.Checked
+            if is_enabled:
+                self.parent.extension_manager.enable_extension(ext_name)
+            else:
+                self.parent.extension_manager.disable_extension(ext_name)
+        self.accept()
 
 class SettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
         self.setWindowTitle("Settings")
-        self.setGeometry(300, 300, 650, 550)
+        self.setGeometry(300, 300, 700, 600)
         self.setFont(UI_FONT)
         self.setWindowFlags(self.windowFlags() | Qt.WindowMinMaxButtonsHint)
 
@@ -80,7 +234,7 @@ class SettingsDialog(QDialog):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.tabs)
         self.layout.addLayout(self.button_layout)
-        self.layout.setSpacing(15)
+        self.layout.setSpacing(10)
         self.setLayout(self.layout)
 
         self.update_cache_size()
@@ -94,11 +248,11 @@ class SettingsDialog(QDialog):
         )
         return (
             f"QTabWidget::pane {{ border: none; border-radius: {BORDER_RADIUS}; "
-            f"background-color: {tab_selected_background}; padding: 10px; }}"
+            f"background-color: {tab_selected_background}; padding: 8px; }}"
             f"QTabBar::tab {{ background-color: {tab_background_color}; color: {tab_text_color}; "
             f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-bottom: none; "
-            f"padding: 12px 24px; border-top-left-radius: {BORDER_RADIUS}; "
-            f"border-top-right-radius: {BORDER_RADIUS}; margin-right: 2px; font-weight: 500; font-size: 16px; }}" 
+            f"padding: 10px 20px; border-top-left-radius: {BORDER_RADIUS}; "
+            f"border-top-right-radius: {BORDER_RADIUS}; margin-right: 2px; font-weight: 500; font-size: 14px; }}" 
             f"QTabBar::tab:selected {{ background: {tab_selected_background}; "
             f"border-bottom: 3px solid {PRIMARY_COLOR}; font-weight: bold; }}"
             "QTabBar::tab:!selected {{ margin-top: 3px; }}"
@@ -108,8 +262,8 @@ class SettingsDialog(QDialog):
 
     def setup_general_tab(self):
         layout = QFormLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
         self.general_tab.setLayout(layout)
 
         self.home_page_input = QLineEdit()
@@ -135,8 +289,8 @@ class SettingsDialog(QDialog):
 
     def setup_security_tab(self):
         layout = QFormLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
         self.security_tab.setLayout(layout)
 
         checkboxes = [
@@ -173,8 +327,8 @@ class SettingsDialog(QDialog):
 
     def setup_data_management_tab(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
         self.data_management_tab.setLayout(layout)
 
         buttons = [
@@ -208,8 +362,8 @@ class SettingsDialog(QDialog):
 
     def setup_performance_tab(self):
         layout = QFormLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
         self.performance_tab.setLayout(layout)
 
         self.hardware_acceleration = QCheckBox("Enable Hardware Acceleration")
@@ -228,8 +382,8 @@ class SettingsDialog(QDialog):
 
     def setup_about_tab(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(20, 20, 20, 20)
-        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(10)
         self.about_tab.setLayout(layout)
         
         self.about_text = QTextEdit()
@@ -240,7 +394,8 @@ class SettingsDialog(QDialog):
             "Developed using PyQt5 & Python.\nEnhanced Features:\n"
             "- Dark/Light/System themes\n- Multiple search engines\n- Advanced security options\n"
             "- Performance optimizations\n- Proxy & fingerprint protection\n"
-            "- System tray integration\n- Improved UI/UX\n\n"
+            "- System tray integration\n- Improved UI/UX\n- JavaScript extension support from mojox.org\n"
+            "\n"
             "GitHub: https://Github.com/Muhammad-Noraeii\nhttps://Github.com/Guguss-31/"
         )
         layout.addWidget(self.about_text)
@@ -327,16 +482,15 @@ class SettingsDialog(QDialog):
         self.accept()
 
     def apply_theme(self, theme=None):
-        if not theme:
-            theme = self.parent.theme
+        theme = theme or self.parent.theme
         dialog_background, text_color, input_background, input_border = (
             (DARK_MODE_BACKGROUND, DARK_MODE_TEXT, DARK_MODE_ACCENT, "#4B5563") if theme == "Dark" 
             else (LIGHT_MODE_BACKGROUND, LIGHT_MODE_TEXT, LIGHT_MODE_ACCENT, "#D1D5DB")
         )
         self.setStyleSheet(
-            f"QDialog {{ background-color: {dialog_background}; color: {text_color}; border-radius: {BORDER_RADIUS}; padding: 15px; }}"
-            f"QLabel {{ color: {text_color}; font-size: 16px; }}"  
-            f"QTabWidget::tab-bar {{ font-size: 16px; font-family: 'Nunito'; }}"  
+            f"QDialog {{ background-color: {dialog_background}; color: {text_color}; border-radius: {BORDER_RADIUS}; padding: 10px; }}"
+            f"QLabel {{ color: {text_color}; font-size: 14px; }}"
+            f"QTabWidget::tab-bar {{ font-size: 14px; font-family: 'Nunito'; }}"
         )
         self.save_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
         self.cancel_button.setStyleSheet(self.parent.get_button_style(SECONDARY_COLOR, "#6B7280", "#374151"))
@@ -367,10 +521,8 @@ class PrivacyInterceptor(QWebEngineUrlRequestInterceptor):
 
     def enhance_fingerprint_protection(self, info):
         if self.parent.settings_persistence.privacy_settings["fingerprint_protection"]:
-            # Randomize common fingerprinting headers
             info.setHttpHeader(b"Accept-Language", b"en-US,en;q=0.9")
             info.setHttpHeader(b"Accept", b"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            # Spoof screen resolution and other fingerprintable attributes via JS
             js_spoof = """
             Object.defineProperty(window, 'screen', {
                 value: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080 },
@@ -383,9 +535,9 @@ class DownloadDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Downloads")
-        self.setGeometry(300, 300, 450, 350)
+        self.setGeometry(300, 300, 500, 400)
         self.active_downloads = 0
-        self.parent_browser = parent  # Explicitly store the parent (MojoBrowser)
+        self.parent_browser = parent
         self.layout = QVBoxLayout()
         self.downloads_layout = QVBoxLayout()
         self.scroll_area = QScrollArea()
@@ -418,11 +570,13 @@ class DownloadDialog(QDialog):
         download_widget = QWidget()
         download_layout = QHBoxLayout()
         label = QLabel(download.suggestedFileName())
-        label.setMinimumWidth(200)
+        label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         progress = QProgressBar()
         progress.setMaximum(100)
-        progress.setMinimumWidth(150)
+        progress.setMinimumWidth(100)
+        progress.setMaximumWidth(200)
         speed_label = QLabel("0 KB/s")
+        speed_label.setMinimumWidth(60)
         cancel_button = QPushButton("Cancel")
         pause_button = QPushButton("Pause")
         pause_button.setStyleSheet(self.parent_browser.get_button_style("#F59E0B", "#FBBF24", "#D97706"))
@@ -436,7 +590,7 @@ class DownloadDialog(QDialog):
         
         last_received = [0]
         def update_speed(received, total):
-            speed = (received - last_received[0]) / 1024  # KB/s
+            speed = (received - last_received[0]) / 1024
             speed_label.setText(f"{speed:.1f} KB/s")
             last_received[0] = received
             progress.setValue(int((received / total) * 100))
@@ -444,7 +598,7 @@ class DownloadDialog(QDialog):
         download.downloadProgress.connect(update_speed)
         download.finished.connect(lambda: self.on_download_finished(download, download_widget))
         download.stateChanged.connect(lambda state: self.on_state_changed(state, download_widget, pause_button))
-        cancel_button.clicked.connect(lambda: download.cancel())
+        cancel_button.clicked.connect(download.cancel)
         pause_button.clicked.connect(lambda: download.pause() if download.state() == QWebEngineDownloadItem.DownloadInProgress else download.resume())
 
     def on_download_finished(self, download, widget):
@@ -490,11 +644,15 @@ class MojoBrowser(QMainWindow):
         self.download_dialog = None
         self.profiles = {"Default": QWebEngineProfile.defaultProfile()}
 
+        self.extension_manager = ExtensionManager(self)
+        self.extension_manager.load_extension_status()
+        self.extension_manager.load_extensions()
+
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
-        self.layout.setContentsMargins(10, 10, 10, 10)
-        self.layout.setSpacing(10)
+        self.layout.setContentsMargins(8, 8, 8, 8)
+        self.layout.setSpacing(8)
 
         self.create_tool_bar()
         self.create_tabs()
@@ -521,10 +679,112 @@ class MojoBrowser(QMainWindow):
 
         self.tab_suspension_timer = QTimer(self)
         self.tab_suspension_timer.timeout.connect(self.suspend_inactive_tabs)
-        self.tab_suspension_timer.start(120000)  
+        self.tab_suspension_timer.start(120000)
+        
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.check_for_updates)
-        self.update_timer.start(86400000)  
+        self.update_timer.start(86400000)
+
+    def create_tool_bar(self):
+        self.tool_bar = QToolBar("Navigation", self)
+        self.addToolBar(Qt.TopToolBarArea, self.tool_bar)
+        self.tool_bar.setIconSize(QSize(24, 24))
+        self.tool_bar.setFont(UI_FONT)
+        self.tool_bar.setStyleSheet(self.get_toolbar_style())
+        self.tool_bar.setMovable(True)
+
+        actions = [
+            ("back.png", "go-previous", "Back", "Go to previous page", self.browser_back),
+            ("forward.png", "go-next", "Forward", "Go to next page", self.browser_forward),
+            (None, "view-refresh", "Reload", "Reload page", self.browser_reload),
+            (None, "process-stop", "Stop", "Stop loading", self.browser_stop),
+            ("home.png", "go-home", "Home", "Go to homepage", self.go_home),
+            (None, "zoom-in", "Zoom In", "Increase zoom", self.zoom_in),
+            (None, "zoom-out", "Zoom Out", "Decrease zoom", self.zoom_out),
+            (None, "view-fullscreen", "Fullscreen", "Toggle fullscreen", self.toggle_fullscreen),
+        ]
+        
+        for icon_file, theme_icon, text, tip, connect in actions:
+            icon = QIcon(f"icons/{icon_file}") if icon_file and os.path.exists(f"icons/{icon_file}") else QIcon.fromTheme(theme_icon)
+            action = QAction(icon, text, self)
+            action.setStatusTip(tip)
+            action.triggered.connect(connect)
+            self.tool_bar.addAction(action)
+
+        self.address_bar = QLineEdit()
+        self.address_bar.setStyleSheet(self.get_input_style())
+        self.address_bar.setMinimumWidth(300)
+        self.address_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.address_bar.returnPressed.connect(self.load_page)
+        self.address_bar.setClearButtonEnabled(True)
+        self.tool_bar.addWidget(self.address_bar)
+
+        go_action = QAction(QIcon("icons/search.png") if os.path.exists("icons/search.png") else QIcon.fromTheme("go-jump"), "Go", self)
+        go_action.setStatusTip("Go to address or search")
+        go_action.triggered.connect(self.load_page)
+        self.tool_bar.addAction(go_action)
+
+        self.tool_bar.addSeparator()
+        
+        additional_actions = [
+            ("new_tab.png", "document-new", "New Tab", "Open new tab", self.add_new_tab),
+            (None, "emblem-favorite", "Bookmark", "Bookmark page", self.settings_persistence.add_bookmark),
+            (None, "bookmarks", "Bookmarks", "View bookmarks", self.settings_persistence.view_bookmarks),
+            (None, "document-open-recent", "History", "View history", self.settings_persistence.view_history),
+            ("settings.png", "preferences-system", "Settings", "Open settings", self.open_settings),
+            ("exten.png", "applications-other", "Extensions", "Manage extensions", self.open_extensions),
+        ]
+        
+        for icon_file, theme_icon, text, tip, connect in additional_actions:
+            icon = QIcon(f"icons/{icon_file}") if icon_file and os.path.exists(f"icons/{icon_file}") else QIcon.fromTheme(theme_icon)
+            action = QAction(icon, text, self)
+            action.setStatusTip(tip)
+            action.triggered.connect(connect)
+            self.tool_bar.addAction(action)
+
+        reader_action = QAction(QIcon.fromTheme("document-preview"), "Reader Mode", self)
+        reader_action.setStatusTip("Toggle reader mode")
+        reader_action.triggered.connect(self.toggle_reader_mode)
+        self.tool_bar.addAction(reader_action)
+
+        profile_action = QAction(QIcon.fromTheme("system-users"), "Switch Profile", self)
+        profile_action.setStatusTip("Switch user profile")
+        profile_action.triggered.connect(self.switch_profile)
+        self.tool_bar.addAction(profile_action)
+
+    def get_toolbar_style(self):
+        theme = self.theme
+        return (
+            f"QToolBar {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
+            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 8px; spacing: 6px; }}"
+            f"QToolButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {PRIMARY_COLOR}, stop:1 {self.adjust_color(PRIMARY_COLOR, -20)}); "
+            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 8px; font-size: 14px; }}"
+            f"QToolButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {BUTTON_HOVER_COLOR}, stop:1 {self.adjust_color(BUTTON_HOVER_COLOR, -20)}); }}"
+            f"QToolButton:pressed {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {BUTTON_PRESSED_COLOR}, stop:1 {self.adjust_color(BUTTON_PRESSED_COLOR, -20)}); }}"
+        )
+
+    def apply_styles(self):
+        theme = self.theme
+        main_background, main_text_color, input_background, input_border = (
+            (DARK_MODE_BACKGROUND, DARK_MODE_TEXT, DARK_MODE_ACCENT, "#4B5563") if theme == "Dark" 
+            else (LIGHT_MODE_BACKGROUND, LIGHT_MODE_TEXT, LIGHT_MODE_ACCENT, "#D1D5DB")
+        )
+        app_stylesheet = (
+            f"QMainWindow {{ background-color: {main_background}; color: {main_text_color}; font-size: 14px; }}"
+            f"QToolBar {{ background-color: {input_background}; }}"
+            f"QStatusBar {{ background-color: {input_background}; }}"
+        )
+        self.setStyleSheet(app_stylesheet)
+        self.tabs.setStyleSheet(self.get_tab_style())
+        self.statusBar().setStyleSheet(self.get_statusbar_style())
+        self.tool_bar.setStyleSheet(self.get_toolbar_style())
+        self.address_bar.setStyleSheet(self.get_input_style())
+        if hasattr(self, 'settings_dialog') and self.settings_dialog:
+            self.settings_dialog.apply_theme()
+
+    def open_extensions(self):
+        dialog = ExtensionsDialog(self)
+        dialog.exec_()
 
     def create_tabs(self):
         self.tabs = QTabWidget()
@@ -560,11 +820,11 @@ class MojoBrowser(QMainWindow):
             else (LIGHT_MODE_TEXT, LIGHT_MODE_ACCENT, LIGHT_MODE_BACKGROUND)
         )
         return (
-            "QTabBar::close-button { image: url('icons/close_tab.png'); width: 16px; height: 16px; subcontrol-position: right; }"
+            "QTabBar::close-button { image: url('icons/close_tab.png'); width: 12px; height: 12px; subcontrol-position: right; }"
             f"QTabWidget::pane {{ border: none; border-radius: {BORDER_RADIUS}; background-color: {tab_selected_background}; padding: 5px; }}"
             f"QTabBar::tab {{ background-color: {tab_background_color}; color: {tab_text_color}; "
             f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-bottom: none; "
-            f"padding: 10px 20px; border-top-left-radius: {BORDER_RADIUS}; border-top-right-radius: {BORDER_RADIUS}; font-size: 16px; }}"  
+            f"padding: 8px 16px; border-top-left-radius: {BORDER_RADIUS}; border-top-right-radius: {BORDER_RADIUS}; font-size: 14px; }}"
             f"QTabBar::tab:selected {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {tab_selected_background}, stop:1 {self.adjust_color(tab_selected_background, -10)}); "
             f"border-bottom: 3px solid {PRIMARY_COLOR}; font-weight: bold; }}"
             f"QTabBar::tab:hover:!selected {{ background: {'#374151' if theme == 'Dark' else '#E5E7EB'}; }}"
@@ -574,14 +834,14 @@ class MojoBrowser(QMainWindow):
         theme = self.theme
         return (
             f"QStatusBar {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 8px; font-size: 16px; }}" 
+            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 14px; }}"
         )
 
     def get_button_style(self, background_color, hover_color, pressed_color):
         text_color = DARK_MODE_TEXT if self.theme == "Dark" else LIGHT_MODE_TEXT
         return (
             f"QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {background_color}, stop:1 {self.adjust_color(background_color, -20)}); "
-            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 12px 24px; font-weight: 500; font-size: 16px; }}"  
+            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 10px 20px; font-weight: 500; font-size: 14px; }}"
             f"QPushButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {hover_color}, stop:1 {self.adjust_color(hover_color, -20)}); }}"
             f"QPushButton:pressed {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {pressed_color}, stop:1 {self.adjust_color(pressed_color, -20)}); }}"
         )
@@ -591,17 +851,17 @@ class MojoBrowser(QMainWindow):
         return (
             f"QLineEdit, QComboBox, QTextEdit {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
             f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; "
-            f"border-radius: {BORDER_RADIUS}; padding: 10px; font-size: 16px; }}" 
+            f"border-radius: {BORDER_RADIUS}; padding: 8px; font-size: 14px; }}"
             f"QLineEdit:focus, QComboBox:focus {{ border: 2px solid {PRIMARY_COLOR}; }}"
         )
 
     def get_checkbox_style(self):
         theme = self.theme
-        return f"QCheckBox {{ color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; padding: 8px; font-weight: 500; font-size: 16px; }}"  
+        return f"QCheckBox {{ color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; padding: 6px; font-weight: 500; font-size: 14px; }}"
 
     def get_label_style(self):
         theme = self.theme
-        return f"QLabel {{ color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; font-weight: 600; font-size: 16px; }}" 
+        return f"QLabel {{ color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; font-weight: 600; font-size: 14px; }}"
 
     def get_list_style(self):
         theme = self.theme
@@ -611,8 +871,8 @@ class MojoBrowser(QMainWindow):
         )
         return (
             f"QListWidget {{ background-color: {list_background}; color: {list_text_color}; "
-            f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-radius: {BORDER_RADIUS}; padding: 10px; font-size: 16px; }}" 
-            "QListWidget::item { padding: 12px; }" 
+            f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-radius: {BORDER_RADIUS}; padding: 8px; font-size: 14px; }}"
+            "QListWidget::item { padding: 8px; }"
             f"QListWidget::item:selected {{ background-color: {list_selected_background}; }}"
         )
 
@@ -622,101 +882,6 @@ class MojoBrowser(QMainWindow):
         g = min(max(((color >> 8) & 0xFF) + amount, 0), 255)
         b = min(max((color & 0xFF) + amount, 0), 255)
         return f"#{r:02x}{g:02x}{b:02x}"
-
-    def create_tool_bar(self):
-        self.tool_bar = QToolBar("Navigation", self)
-        self.addToolBar(Qt.TopToolBarArea, self.tool_bar)
-        self.tool_bar.setIconSize(QSize(32, 32))
-        self.tool_bar.setFont(UI_FONT)
-        self.tool_bar.setStyleSheet(self.get_toolbar_style())
-        self.tool_bar.setMovable(True)
-
-        actions = [
-            ("back.png", "go-previous", "Back", "Go to previous page", self.browser_back),
-            ("forward.png", "go-next", "Forward", "Go to next page", self.browser_forward),
-            (None, "view-refresh", "Reload", "Reload page", self.browser_reload),
-            (None, "process-stop", "Stop", "Stop loading", self.browser_stop),
-            ("home.png", "go-home", "Home", "Go to homepage", self.go_home),
-            (None, "zoom-in", "Zoom In", "Increase zoom", self.zoom_in),
-            (None, "zoom-out", "Zoom Out", "Decrease zoom", self.zoom_out),
-            (None, "view-fullscreen", "Fullscreen", "Toggle fullscreen", self.toggle_fullscreen),
-        ]
-        
-        for icon_file, theme_icon, text, tip, connect in actions:
-            icon = QIcon(f"icons/{icon_file}") if icon_file and os.path.exists(f"icons/{icon_file}") else QIcon.fromTheme(theme_icon)
-            action = QAction(icon, text, self)
-            action.setStatusTip(tip)
-            action.triggered.connect(connect)
-            self.tool_bar.addAction(action)
-
-        self.address_bar = QLineEdit()
-        self.address_bar.setStyleSheet(self.get_input_style())
-        self.address_bar.setMinimumWidth(400)
-        self.address_bar.returnPressed.connect(self.load_page)
-        self.address_bar.setClearButtonEnabled(True)
-        self.tool_bar.addWidget(self.address_bar)
-
-        go_action = QAction(QIcon("icons/search.png") if os.path.exists("icons/search.png") else QIcon.fromTheme("go-jump"), "Go", self)
-        go_action.setStatusTip("Go to address or search")
-        go_action.triggered.connect(self.load_page)
-        self.tool_bar.addAction(go_action)
-
-        self.tool_bar.addSeparator()
-        
-        additional_actions = [
-            ("new_tab.png", "document-new", "New Tab", "Open new tab", self.add_new_tab),
-            (None, "emblem-favorite", "Bookmark", "Bookmark page", self.settings_persistence.add_bookmark),
-            (None, "bookmarks", "Bookmarks", "View bookmarks", self.settings_persistence.view_bookmarks),
-            (None, "document-open-recent", "History", "View history", self.settings_persistence.view_history),
-            ("settings.png", "preferences-system", "Settings", "Open settings", self.open_settings),
-        ]
-        
-        for icon_file, theme_icon, text, tip, connect in additional_actions:
-            icon = QIcon(f"icons/{icon_file}") if icon_file and os.path.exists(f"icons/{icon_file}") else QIcon.fromTheme(theme_icon)
-            action = QAction(icon, text, self)
-            action.setStatusTip(tip)
-            action.triggered.connect(connect)
-            self.tool_bar.addAction(action)
-
-        reader_action = QAction(QIcon.fromTheme("document-preview"), "Reader Mode", self)
-        reader_action.setStatusTip("Toggle reader mode")
-        reader_action.triggered.connect(self.toggle_reader_mode)
-        self.tool_bar.addAction(reader_action)
-
-        profile_action = QAction(QIcon.fromTheme("system-users"), "Switch Profile", self)
-        profile_action.setStatusTip("Switch user profile")
-        profile_action.triggered.connect(self.switch_profile)
-        self.tool_bar.addAction(profile_action)
-
-    def get_toolbar_style(self):
-        theme = self.theme
-        return (
-            f"QToolBar {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 10px; spacing: 8px; }}"
-            f"QToolButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {PRIMARY_COLOR}, stop:1 {self.adjust_color(PRIMARY_COLOR, -20)}); "
-            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 10px; font-size: 16px; }}" 
-            f"QToolButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {BUTTON_HOVER_COLOR}, stop:1 {self.adjust_color(BUTTON_HOVER_COLOR, -20)}); }}"
-            f"QToolButton:pressed {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {BUTTON_PRESSED_COLOR}, stop:1 {self.adjust_color(BUTTON_PRESSED_COLOR, -20)}); }}"
-        )
-
-    def apply_styles(self):
-        theme = self.theme
-        main_background, main_text_color, input_background, input_border = (
-            (DARK_MODE_BACKGROUND, DARK_MODE_TEXT, DARK_MODE_ACCENT, "#4B5563") if theme == "Dark" 
-            else (LIGHT_MODE_BACKGROUND, LIGHT_MODE_TEXT, LIGHT_MODE_ACCENT, "#D1D5DB")
-        )
-        app_stylesheet = (
-            f"QMainWindow {{ background-color: {main_background}; color: {main_text_color}; font-size: 16px; }}" 
-            f"QToolBar {{ background-color: {input_background}; }}"
-            f"QStatusBar {{ background-color: {input_background}; }}"
-        )
-        self.setStyleSheet(app_stylesheet)
-        self.tabs.setStyleSheet(self.get_tab_style())
-        self.statusBar().setStyleSheet(self.get_statusbar_style())
-        self.tool_bar.setStyleSheet(self.get_toolbar_style())
-        self.address_bar.setStyleSheet(self.get_input_style())
-        if hasattr(self, 'settings_dialog') and self.settings_dialog:
-            self.settings_dialog.apply_theme()
 
     def add_new_tab(self, url=None):
         browser = QWebEngineView(self) if self.settings_persistence.privacy_settings["private_browsing"] else QWebEngineView()
@@ -751,7 +916,7 @@ class MojoBrowser(QMainWindow):
         browser.urlChanged.connect(lambda u, b=browser: (self.update_tab_title(b, u), self.update_history(u), self.update_address_bar(i)))
         browser.loadStarted.connect(lambda: self.statusBar().showMessage("Loading..."))
         browser.loadProgress.connect(lambda p: self.statusBar().showMessage(f"Loading... {p}%"))
-        browser.loadFinished.connect(lambda ok, b=browser: self.load_finished(ok, b))
+        browser.loadFinished.connect(lambda ok, b=browser: (self.load_finished(ok, b), self.extension_manager.inject_extensions(b)))
         
         browser.setContextMenuPolicy(Qt.CustomContextMenu)
         browser.customContextMenuRequested.connect(lambda pos: self.show_web_context_menu(pos, browser))
@@ -764,13 +929,13 @@ class MojoBrowser(QMainWindow):
 
     def update_tab_title(self, browser, url):
         index = self.tabs.indexOf(browser)
-        if index >= 0: 
+        if index >= 0:
             title = browser.page().title() or "New Tab"
             self.tabs.setTabText(index, title[:30] + "..." if len(title) > 30 else title)
             self.tabs.setTabToolTip(index, title)
 
     def update_address_bar(self, index):
-        if index >= 0:  
+        if index >= 0:
             browser = self.tabs.widget(index)
             if browser:
                 self.address_bar.setText(browser.url().toString())
@@ -879,7 +1044,7 @@ class MojoBrowser(QMainWindow):
         menu = QMenu(self)
         menu.setStyleSheet(
             f"QMenu {{ background-color: {DARK_MODE_ACCENT if self.theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 16px; }}" 
+            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 14px; }}"
             f"QMenu::item:selected {{ background-color: {PRIMARY_COLOR}; color: {TEXT_COLOR}; }}"
         )
         menu.addAction("Rename Tab", lambda: self.rename_tab(index))
@@ -1068,10 +1233,9 @@ class MojoBrowser(QMainWindow):
             });
 
             document.querySelectorAll('img').forEach((img, index) => {
-                if (index > 5) img.remove(); 
+                if (index > 5) img.remove();
             });
 
-            // Create reader-friendly content
             const readerContent = document.createElement('div');
             readerContent.id = 'reader-content';
             readerContent.innerHTML = content.innerHTML;
@@ -1127,7 +1291,7 @@ class MojoBrowser(QMainWindow):
         menu = QMenu(self)
         menu.setStyleSheet(
             f"QMenu {{ background-color: {DARK_MODE_ACCENT if self.theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 16px; }}"
+            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 14px; }}"
             f"QMenu::item:selected {{ background-color: {PRIMARY_COLOR}; color: {TEXT_COLOR}; }}"
         )
         menu.addAction("Back", self.browser_back)
@@ -1157,7 +1321,7 @@ class SettingsPersistence:
 
     def load_settings(self):
         if os.path.exists(self.settings_file):
-            with open(self.settings_file, "r") as file:
+            with open(self.settings_file, "r", encoding="utf-8") as file:
                 settings = json.load(file)
                 self.parent.home_page = settings.get("home_page", self.parent.DEFAULT_HOME_PAGE)
                 self.parent.search_engine = settings.get("search_engine", "Google")
@@ -1183,7 +1347,7 @@ class SettingsPersistence:
             self.parent.cache_size_limit = "250 MB"
 
     def save_settings(self):
-        with open(self.settings_file, "w") as file:
+        with open(self.settings_file, "w", encoding="utf-8") as file:
             json.dump({
                 "home_page": self.parent.home_page,
                 "search_engine": self.parent.search_engine,
@@ -1199,10 +1363,10 @@ class SettingsPersistence:
             }, file, indent=4)
 
     def load_bookmarks(self):
-        self.parent.bookmarks = json.load(open(self.bookmarks_file, "r")) if os.path.exists(self.bookmarks_file) else []
+        self.parent.bookmarks = json.load(open(self.bookmarks_file, "r", encoding="utf-8")) if os.path.exists(self.bookmarks_file) else []
 
     def save_bookmarks(self):
-        with open(self.bookmarks_file, "w") as file:
+        with open(self.bookmarks_file, "w", encoding="utf-8") as file:
             json.dump(self.parent.bookmarks, file, indent=4)
 
     def add_bookmark(self):
@@ -1221,7 +1385,7 @@ class SettingsPersistence:
     def view_bookmarks(self):
         dialog = QDialog(self.parent)
         dialog.setWindowTitle("Bookmarks")
-        dialog.setGeometry(300, 300, 500, 400)
+        dialog.setGeometry(300, 300, 550, 450)
         layout = QVBoxLayout(dialog)
         bookmark_list = QListWidget()
         for bookmark in self.parent.bookmarks:
@@ -1254,27 +1418,27 @@ class SettingsPersistence:
             bookmark_list.takeItem(bookmark_list.currentRow())
 
     def load_history(self):
-        self.parent.history = json.load(open(self.history_file, "r")) if os.path.exists(self.history_file) else []
+        self.parent.history = json.load(open(self.history_file, "r", encoding="utf-8")) if os.path.exists(self.history_file) else []
 
     def save_history(self):
-        with open(self.history_file, "w") as file:
+        with open(self.history_file, "w", encoding="utf-8") as file:
             json.dump(self.parent.history, file, indent=4)
 
     def update_history(self, url):
         url_str = url.toString()
-        if url_str and url_str not in self.parent.history[-50:]:  
+        if url_str and url_str not in self.parent.history[-50:]:
             self.parent.history.append(url_str)
-            if len(self.parent.history) > 50: 
+            if len(self.parent.history) > 50:
                 self.parent.history.pop(0)
             self.save_history()
 
     def view_history(self):
         dialog = QDialog(self.parent)
         dialog.setWindowTitle("History")
-        dialog.setGeometry(300, 300, 500, 400)
+        dialog.setGeometry(300, 300, 550, 450)
         layout = QVBoxLayout(dialog)
         history_list = QListWidget()
-        for url in reversed(self.parent.history[-50:]):  
+        for url in reversed(self.parent.history[-50:]):
             history_list.addItem(url)
         history_list.setStyleSheet(self.parent.get_list_style())
         history_list.itemDoubleClicked.connect(lambda item: self.parent.tabs.currentWidget().setUrl(QUrl(item.text())))
