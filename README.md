@@ -129,7 +129,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - **Maintainer**: [Muhammad Noraeii](https://github.com/Muhammad-Noraeii)
 - **Issues**: Report bugs or suggest features [here](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues).
-- **Email**: (Add your email if desired, e.g., muhammad.noraeii@example.com)
+- **Email**: Muhammad.Noraeii@gmail.com
 
 Star the project if you like it! ⭐
 
