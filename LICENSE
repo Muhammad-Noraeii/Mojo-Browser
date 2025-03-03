@@ -1,21 +1,139 @@
-MIT License
+Mojo X Browser License Agreement
 
-Copyright (c) 2025 Muhammad-Noraeii
+Version 1.0
+Effective Date: March 03, 2025  
+Copyright © 2025 Muhammad Noraeii. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Preamble
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The Mojo X Browser ("Software") is a modern, privacy-focused web browser developed by Muhammad Noraeii and contributors, leveraging Python and the PyQt5 framework. This License Agreement ("License") governs the use, modification, distribution, and contribution to the Software. By accessing, installing, using, or distributing the Software, you agree to abide by the terms and conditions set forth herein.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+This License fosters collaboration within the open-source community while safeguarding the intellectual property and vision of the original Author, ensuring the Software remains a secure, innovative, and user-centric tool.
+
+1. Definitions
+
+1.1 "Software" refers to the Mojo X Browser, encompassing all source code, compiled binaries, documentation, and related files distributed under this License.  
+1.2 "Author" refers to Muhammad Noraeii, the original creator and primary copyright holder of the Software.  
+1.3 "Contributor" refers to any individual or entity submitting enhancements, modifications, or additions to the Software under this License.  
+1.4 "You" or "Licensee" refers to the individual or entity exercising rights granted by this License.  
+1.5 "Derivative Work" refers to any work based on or incorporating the Software, including modifications or adaptations.  
+1.6 "Distribution" refers to making the Software or Derivative Works available to others, in source or binary form.
+
+2. Grant of License
+
+2.1 Usage Rights  
+The Author grants you a worldwide, non-exclusive, non-transferable, royalty-free license to:  
+  Install and use the Software for personal, educational, or non-commercial purposes.  
+  Modify the Software for personal use, provided such modifications are not distributed except as permitted under Section 2.2.
+
+2.2 Distribution and Modification Rights  
+You may distribute the Software or create and share Derivative Works, subject to the following:  
+  All copyright, attribution, and license notices in the original Software must remain intact.  
+  A copy of this License must accompany any distribution.  
+  Derivative Works must be distinctly labeled as such, with a prominent notice:  
+  "This is a modified version of Mojo X Browser, originally created by Muhammad Noraeii. The official Software is available at MojoX.org or https://github.com/Muhammad-Noraeii."  
+  You must submit any modifications or Derivative Works to the Author for potential inclusion in the official repository (see Section 5).  
+  Commercial distribution or use requires prior written consent from the Author (see Section 6).
+
+2.3 Contributor License  
+By contributing to the Software (e.g., via pull requests to https://github.com/Muhammad-Noraeii), you grant the Author a perpetual, worldwide, non-exclusive, royalty-free, transferable license to use, modify, distribute, and sublicense your contributions as part of the Software.
+
+3. Restrictions
+
+3.1 Commercial Use Prohibition  
+You may not use, distribute, or monetize the Software or Derivative Works for commercial purposes without explicit written permission from the Author. Commercial purposes include selling the Software, integrating it into paid products, or generating revenue via ads or subscriptions.
+
+3.2 Preservation of Notices  
+You may not remove, alter, or obscure any copyright, trademark, or attribution notices embedded in the Software.
+
+3.3 Reverse Engineering  
+Unless required for interoperability and permitted by applicable law, you may not reverse engineer, decompile, or disassemble the Software without prior written consent from the Author.
+
+3.4 No Misrepresentation  
+You may not present Derivative Works as the official Mojo X Browser or imply endorsement by the Author without explicit authorization.
+
+3.5 Legal Compliance  
+Your use, modification, or distribution of the Software must comply with all applicable laws and regulations.
+
+4. Intellectual Property
+
+4.1 Ownership  
+The Software is owned by Muhammad Noraeii, who retains all rights, title, and interest, including copyrights, trademarks, and any related patents, except as expressly licensed herein.
+
+4.2 Trademarks  
+"Mojo X" and associated logos are trademarks of Muhammad Noraeii. You may use these trademarks only to attribute the Software to the Author or indicate compatibility, provided such use avoids confusion or misrepresentation.
+
+4.3 Contributor Rights  
+Contributors retain ownership of their original contributions but license them to the Author under Section 2.3.
+
+5. Contribution Process
+
+5.1 Submitting Contributions  
+You are encouraged to submit enhancements or modifications to the Software via the official repository at https://github.com/Muhammad-Noraeii. Contributions must:  
+  Be licensed under this License.  
+  Include clear documentation and code comments.  
+  Meet quality and security standards as determined by the Author.
+
+5.2 Review Process  
+The Author reserves the right to review, accept, reject, or request revisions to contributions at their sole discretion. Acceptance does not imply a warranty or endorsement of the contribution.
+
+6. Commercial Use Authorization
+
+6.1 Request Procedure  
+To seek approval for commercial use or distribution, contact the Author at info@MojoX.org with:  
+  A detailed description of the proposed use.  
+  The intended scope of distribution (e.g., audience size, regions).  
+  Any proposed terms or compensation.
+
+6.2 Approval Terms  
+The Author may grant written permission, potentially with additional conditions or fees, at their discretion. Unauthorized commercial use violates this License.
+
+7. Warranty Disclaimer
+
+The Software is provided "AS IS," without warranties of any kind, express or implied, including but not limited to merchantability, fitness for a specific purpose, or non-infringement. The Author does not guarantee uninterrupted operation, error-free performance, or suitability for any particular use.
+
+8. Limitation of Liability
+
+To the maximum extent permitted by law, the Author and Contributors shall not be liable for any direct, indirect, incidental, special, or consequential damages arising from the use or inability to use the Software, including but not limited to loss of data, profits, or goodwill, even if advised of such potential damages.
+
+9. Termination
+
+9.1 Breach of Terms  
+This License terminates immediately upon any violation of its terms. You must then cease all use and distribution of the Software and destroy all copies in your possession.
+
+9.2 Author’s Discretion  
+The Author may terminate this License with 30 days’ notice, published at MojoX.org or https://github.com/Muhammad-Noraeii.
+
+10. Updates and Modifications
+
+10.1 Software Updates  
+The Author may issue updates or new versions of the Software under this License or a revised version. Continued use after such updates implies acceptance of the updated terms.
+
+10.2 License Revisions  
+The Author may amend this License at any time, with changes posted at MojoX.org or https://github.com/Muhammad-Noraeii. Amendments apply to subsequent uses of the Software.
+
+11. Governing Law and Dispute Resolution
+
+11.1 Governing Law  
+This License is governed by the laws of the jurisdiction where the Author resides, excluding conflict of law principles.
+
+11.2 Dispute Resolution  
+Disputes arising under this License shall be resolved through binding arbitration conducted under the rules of the International Chamber of Commerce (ICC). The arbitration shall occur in a mutually agreed location or online, with the prevailing party entitled to recover reasonable attorney fees and costs.
+
+12. Miscellaneous
+
+12.1 Severability  
+If any provision of this License is deemed unenforceable, the remaining provisions shall continue in effect.
+
+12.2 Entire Agreement  
+This License represents the complete agreement between you and the Author concerning the Software, superseding any prior understandings.
+
+12.3 Contact Information  
+For inquiries or permissions, contact Muhammad Noraeii at info@MojoX.org.
+
+Mojo X Browser © 2025 Muhammad Noraeii. All rights reserved.  
+Official Website: MojoX.org | Repository: https://github.com/Muhammad-Noraeii  
+Developed with gratitude to the open-source community. See repository for contributor credits.
+
+---
+

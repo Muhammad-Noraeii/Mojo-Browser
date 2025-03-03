@@ -385,20 +385,79 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(10)
         self.about_tab.setLayout(layout)
+
         
-        self.about_text = QTextEdit()
-        self.about_text.setReadOnly(True)
-        self.about_text.setStyleSheet(self.parent.get_input_style())
-        self.about_text.setText(
-            "Mojo Browser | v0.2.4 Enhanced\n\n"
-            "Developed using PyQt5 & Python.\nEnhanced Features:\n"
-            "- Dark/Light/System themes\n- Multiple search engines\n- Advanced security options\n"
-            "- Performance optimizations\n- Proxy & fingerprint protection\n"
-            "- System tray integration\n- Improved UI/UX\n- JavaScript extension support from mojox.org\n"
-            "\n"
-            "GitHub: https://Github.com/Muhammad-Noraeii\nhttps://Github.com/Guguss-31/"
+        title_label = QLabel("Mojo Browser")
+        title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        title_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title_label)
+
+        version_label = QLabel("Version: v0.2.4 Enhanced")
+        version_label.setStyleSheet("font-size: 16px; color: #888;")
+        version_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(version_label)
+
+        description_label = QLabel(
+            "Mojo Browser is a modern, open-source web browser built with PyQt5 and Python. "
+            "It prioritizes user privacy, security, and a streamlined browsing experience. "
+            "Enjoy a range of features designed to enhance your online activities."
         )
-        layout.addWidget(self.about_text)
+        description_label.setWordWrap(True)
+        description_label.setStyleSheet("font-size: 14px; margin-top: 10px;")
+        layout.addWidget(description_label)
+
+        features_label = QLabel("Key Features:")
+        features_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 15px;")
+        layout.addWidget(features_label)
+
+        features_list = [
+            "Dark, Light, and System Themes",
+            "Multiple Search Engine Options",
+            "Advanced Security & Privacy Controls",
+            "Performance Optimizations",
+            "Proxy & Fingerprint Protection",
+            "System Tray Integration",
+            "Enhanced User Interface/Experience",
+            "JavaScript Extension info (MojoX Store)",
+            "Tab Suspension for Performance",
+            "Download Manager",
+            "Reader Mode"
+        ]
+
+        features_text = ""
+        for feature in features_list:
+            features_text += f"• {feature}\n"
+
+        features_text_label = QLabel(features_text)
+        features_text_label.setStyleSheet("font-size: 14px;")
+        features_text_label.setWordWrap(True)
+        layout.addWidget(features_text_label)
+
+        credits_label = QLabel("Developed by:")
+        credits_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-top: 15px;")
+        layout.addWidget(credits_label)
+
+        developer1_label = QLabel(
+            "<a href=\"https://Github.com/Muhammad-Noraeii\">Muhammad-Noraeii</a>"
+        )
+        developer1_label.setOpenExternalLinks(True)
+        developer1_label.setStyleSheet("font-size: 14px; color: #3B82F6; text-decoration: underline;")
+        layout.addWidget(developer1_label)
+        
+        developer2_label = QLabel(
+            "<a href=\"https://Github.com/Guguss-31/\">Guguss-31</a>"
+        )
+        developer2_label.setOpenExternalLinks(True)
+        developer2_label.setStyleSheet("font-size: 14px; color: #3B82F6; text-decoration: underline;")
+        layout.addWidget(developer2_label)
+
+        layout.addStretch()
+
+        copyright_label = QLabel("© 2025 Mojo Browser. All Rights Reserved.")
+        copyright_label.setStyleSheet("font-size: 10px; color: #888;")
+        copyright_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(copyright_label)
+
 
     def preview_theme(self, theme):
         temp_theme = theme if theme != "System" else ("Dark" if QApplication.palette().color(QPalette.Window).lightness() < 128 else "Light")

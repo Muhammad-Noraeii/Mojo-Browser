@@ -1,5 +1,3 @@
-
-
 # Mojo Browser
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,7 +6,12 @@
 [![GitHub Issues](https://img.shields.io/github/issues/Muhammad-Noraeii/Mojo-Browser)](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/Muhammad-Noraeii/Mojo-Browser)](https://github.com/Muhammad-Noraeii/Mojo-Browser/stargazers)
 
-A privacy-centric, lightweight web browser built with Python and PyQt5. Mojo Browser offers robust security features, extension support, and a modern, customizable interface.
+[France Translation](README-FR.md)
+
+[Spanish Translation](README-ES.md)
+
+
+A privacy-centric, lightweight web browser built with Python and PyQt5. Mojo Browser offers robust security features, extension info, and a modern, customizable interface.
 
 ---
 
@@ -26,11 +29,11 @@ A privacy-centric, lightweight web browser built with Python and PyQt5. Mojo Bro
 
 ## Features
 
-- **Privacy & Security**: Tracker blocking, proxy support, HTTPS enforcement, and anti-fingerprinting.
+- **Privacy & Security**: Tracker blocking, proxy info, HTTPS enforcement, and anti-fingerprinting.
 - **Extensions**: Load JavaScript extensions from MojoX or custom sources.
 - **Themes**: Dark, Light, or System theme options.
 - **Performance**: Hardware acceleration, tab suspension, and configurable cache limits.
-- **Search Engines**: Supports Google, DuckDuckGo, Mojeek, and more.
+- **Search Engines**: infos Google, DuckDuckGo, Mojeek, and more.
 - **Extras**: Reader mode, bookmarks, history, and download manager.
 
 ---
@@ -129,7 +132,10 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - **Maintainer**: [Muhammad Noraeii](https://github.com/Muhammad-Noraeii)
 - **Issues**: Report bugs or suggest features [here](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues).
-- **Email**: (Add your email if desired, e.g., muhammad.noraeii@example.com)
+- **Email**: Muhammad.Noraeii@gmail.com
+
+---
+
+Thank you for using Mojo Browser!
 
 Star the project if you like it! ⭐
-
