@@ -120,7 +120,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ## Acknowledgements
 
 - **PyQt5 Team**: For the powerful GUI framework.
-- **Contributors**: [Muhammad-Noraeii](https://github.com/Muhammad-Noraeii), [Guguss-31](https://github.com/Guguss-31).
+- **Contributor**: [Muhammad-Noraeii](https://github.com/Muhammad-Noraeii)
 - **Community**: Thanks to all users and testers!
 
 ---
@@ -130,6 +130,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - **Maintainer**: [Muhammad Noraeii](https://github.com/Muhammad-Noraeii)
 - **Issues**: Report bugs or suggest features [here](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues).
 - **Email**: Muhammad.Noraeii@gmail.com
+
+### By Muhammad Noraeii
+#### 3/5/2025
 
 Star the project if you like it! ⭐
 
