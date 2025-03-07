@@ -34,8 +34,8 @@ BUTTON_BORDER_RADIUS = "5px"
 BUTTON_HOVER_COLOR = "#60A5FA"
 BUTTON_PRESSED_COLOR = "#2563EB"
 
-UI_FONT = QFont("Nunito", 14)
-FALLBACK_FONT = QFont("Arial", 14)
+UI_FONT = QFont("Nunito", 13)
+FALLBACK_FONT = QFont("Arial", 13)
 
 class ExtensionsDialog(QDialog):
     def __init__(self, parent=None):
@@ -47,7 +47,7 @@ class ExtensionsDialog(QDialog):
 
         layout = QVBoxLayout()
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
 
         self.extensions_list = QListWidget()
         self.extensions_list.setStyleSheet(self.parent.get_list_style())
@@ -121,12 +121,12 @@ class ExtensionsDialog(QDialog):
         layout = QVBoxLayout()
 
         store_list = QListWidget()
-        store_list.setSpacing(5)
+        store_list.setSpacing(6)
 
         for ext in extensions:
             item_widget = QWidget()
             item_layout = QHBoxLayout()
-            item_layout.setContentsMargins(5, 5, 5, 5)
+            item_layout.setContentsMargins(6, 6, 6, 6)
 
             text_widget = QWidget()
             text_layout = QVBoxLayout()
@@ -234,7 +234,7 @@ class SettingsDialog(QDialog):
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.tabs)
         self.layout.addLayout(self.button_layout)
-        self.layout.setSpacing(10)
+        self.layout.setSpacing(12)
         self.setLayout(self.layout)
 
         self.update_cache_size()
@@ -248,11 +248,11 @@ class SettingsDialog(QDialog):
         )
         return (
             f"QTabWidget::pane {{ border: none; border-radius: {BORDER_RADIUS}; "
-            f"background-color: {tab_selected_background}; padding: 8px; }}"
+            f"background-color: {tab_selected_background}; padding: 12px; }}"
             f"QTabBar::tab {{ background-color: {tab_background_color}; color: {tab_text_color}; "
             f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-bottom: none; "
-            f"padding: 10px 20px; border-top-left-radius: {BORDER_RADIUS}; "
-            f"border-top-right-radius: {BORDER_RADIUS}; margin-right: 2px; font-weight: 500; font-size: 14px; }}" 
+            f"padding: 12px 24px; border-top-left-radius: {BORDER_RADIUS}; "
+            f"border-top-right-radius: {BORDER_RADIUS}; margin-right: 2px; font-weight: 500; font-size: 14px; }}"
             f"QTabBar::tab:selected {{ background: {tab_selected_background}; "
             f"border-bottom: 3px solid {PRIMARY_COLOR}; font-weight: bold; }}"
             "QTabBar::tab:!selected {{ margin-top: 3px; }}"
@@ -263,7 +263,7 @@ class SettingsDialog(QDialog):
     def setup_general_tab(self):
         layout = QFormLayout()
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
         self.general_tab.setLayout(layout)
 
         self.home_page_input = QLineEdit()
@@ -290,7 +290,7 @@ class SettingsDialog(QDialog):
     def setup_security_tab(self):
         layout = QFormLayout()
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
         self.security_tab.setLayout(layout)
 
         checkboxes = [
@@ -328,7 +328,7 @@ class SettingsDialog(QDialog):
     def setup_data_management_tab(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
         self.data_management_tab.setLayout(layout)
 
         buttons = [
@@ -363,7 +363,7 @@ class SettingsDialog(QDialog):
     def setup_performance_tab(self):
         layout = QFormLayout()
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
         self.performance_tab.setLayout(layout)
 
         self.hardware_acceleration = QCheckBox("Enable Hardware Acceleration")
@@ -383,7 +383,7 @@ class SettingsDialog(QDialog):
     def setup_about_tab(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(12)
         self.about_tab.setLayout(layout)
         
         self.about_text = QTextEdit()
@@ -488,7 +488,8 @@ class SettingsDialog(QDialog):
             else (LIGHT_MODE_BACKGROUND, LIGHT_MODE_TEXT, LIGHT_MODE_ACCENT, "#D1D5DB")
         )
         self.setStyleSheet(
-            f"QDialog {{ background-color: {dialog_background}; color: {text_color}; border-radius: {BORDER_RADIUS}; padding: 10px; }}"
+            f"QDialog {{ background-color: {dialog_background}; color: {text_color}; "
+            f"border-radius: {BORDER_RADIUS}; padding: 15px; }}"
             f"QLabel {{ color: {text_color}; font-size: 14px; }}"
             f"QTabWidget::tab-bar {{ font-size: 14px; font-family: 'Nunito'; }}"
         )
@@ -559,8 +560,8 @@ class DownloadDialog(QDialog):
         self.setLayout(self.layout)
         self.setStyleSheet(
             f"QDialog {{ background-color: {DARK_MODE_BACKGROUND if parent.theme == 'Dark' else LIGHT_MODE_BACKGROUND}; "
-            f"color: {DARK_MODE_TEXT if parent.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 10px; }}"
-            f"QLabel {{ font-size: 14px; padding: 5px; }}"
+            f"color: {DARK_MODE_TEXT if parent.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 15px; }}"
+            f"QLabel {{ font-size: 14px; padding: 6px; }}"
             f"QProgressBar {{ border: 1px solid {'#4B5563' if parent.theme == 'Dark' else '#D1D5DB'}; border-radius: 5px; text-align: center; }}"
             "QProgressBar::chunk { background-color: #3B82F6; border-radius: 3px; }"
         )
@@ -573,10 +574,10 @@ class DownloadDialog(QDialog):
         label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         progress = QProgressBar()
         progress.setMaximum(100)
-        progress.setMinimumWidth(100)
-        progress.setMaximumWidth(200)
+        progress.setMinimumWidth(120)
+        progress.setMaximumWidth(220)
         speed_label = QLabel("0 KB/s")
-        speed_label.setMinimumWidth(60)
+        speed_label.setMinimumWidth(70)
         cancel_button = QPushButton("Cancel")
         pause_button = QPushButton("Pause")
         pause_button.setStyleSheet(self.parent_browser.get_button_style("#F59E0B", "#FBBF24", "#D97706"))
@@ -630,6 +631,8 @@ class MojoBrowser(QMainWindow):
         self.setGeometry(100, 100, 1280, 800)
         self.setFont(UI_FONT)
 
+        self.setWindowIcon(QIcon("icons/Mojo.ico"))
+
         self.settings_persistence = SettingsPersistence(self)
         self.bookmarks = []
         self.history = []
@@ -651,8 +654,8 @@ class MojoBrowser(QMainWindow):
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
-        self.layout.setContentsMargins(8, 8, 8, 8)
-        self.layout.setSpacing(8)
+        self.layout.setContentsMargins(10, 10, 10, 10)
+        self.layout.setSpacing(10)
 
         self.create_tool_bar()
         self.create_tabs()
@@ -688,7 +691,7 @@ class MojoBrowser(QMainWindow):
     def create_tool_bar(self):
         self.tool_bar = QToolBar("Navigation", self)
         self.addToolBar(Qt.TopToolBarArea, self.tool_bar)
-        self.tool_bar.setIconSize(QSize(24, 24))
+        self.tool_bar.setIconSize(QSize(28, 28))
         self.tool_bar.setFont(UI_FONT)
         self.tool_bar.setStyleSheet(self.get_toolbar_style())
         self.tool_bar.setMovable(True)
@@ -713,7 +716,7 @@ class MojoBrowser(QMainWindow):
 
         self.address_bar = QLineEdit()
         self.address_bar.setStyleSheet(self.get_input_style())
-        self.address_bar.setMinimumWidth(300)
+        self.address_bar.setMinimumWidth(320)
         self.address_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.address_bar.returnPressed.connect(self.load_page)
         self.address_bar.setClearButtonEnabled(True)
@@ -756,9 +759,11 @@ class MojoBrowser(QMainWindow):
         theme = self.theme
         return (
             f"QToolBar {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 8px; spacing: 6px; }}"
+            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; "
+            f"border-radius: {BORDER_RADIUS}; padding: 10px; spacing: 10px; }}"
             f"QToolButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {PRIMARY_COLOR}, stop:1 {self.adjust_color(PRIMARY_COLOR, -20)}); "
-            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 8px; font-size: 14px; }}"
+            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 12px; "
+            f"font-size: 14px; }}"
             f"QToolButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {BUTTON_HOVER_COLOR}, stop:1 {self.adjust_color(BUTTON_HOVER_COLOR, -20)}); }}"
             f"QToolButton:pressed {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {BUTTON_PRESSED_COLOR}, stop:1 {self.adjust_color(BUTTON_PRESSED_COLOR, -20)}); }}"
         )
@@ -820,11 +825,11 @@ class MojoBrowser(QMainWindow):
             else (LIGHT_MODE_TEXT, LIGHT_MODE_ACCENT, LIGHT_MODE_BACKGROUND)
         )
         return (
-            "QTabBar::close-button { image: url('icons/close_tab.png'); width: 12px; height: 12px; subcontrol-position: right; }"
-            f"QTabWidget::pane {{ border: none; border-radius: {BORDER_RADIUS}; background-color: {tab_selected_background}; padding: 5px; }}"
+            "QTabBar::close-button { image: url('icons/close_tab.png'); width: 14px; height: 14px; subcontrol-position: right; }"
+            f"QTabWidget::pane {{ border: none; border-radius: {BORDER_RADIUS}; background-color: {tab_selected_background}; padding: 8px; }}"
             f"QTabBar::tab {{ background-color: {tab_background_color}; color: {tab_text_color}; "
             f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-bottom: none; "
-            f"padding: 8px 16px; border-top-left-radius: {BORDER_RADIUS}; border-top-right-radius: {BORDER_RADIUS}; font-size: 14px; }}"
+            f"padding: 10px 20px; border-top-left-radius: {BORDER_RADIUS}; border-top-right-radius: {BORDER_RADIUS}; font-size: 14px; }}"
             f"QTabBar::tab:selected {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {tab_selected_background}, stop:1 {self.adjust_color(tab_selected_background, -10)}); "
             f"border-bottom: 3px solid {PRIMARY_COLOR}; font-weight: bold; }}"
             f"QTabBar::tab:hover:!selected {{ background: {'#374151' if theme == 'Dark' else '#E5E7EB'}; }}"
@@ -834,14 +839,15 @@ class MojoBrowser(QMainWindow):
         theme = self.theme
         return (
             f"QStatusBar {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 14px; }}"
+            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 6px; font-size: 14px; }}"
         )
 
     def get_button_style(self, background_color, hover_color, pressed_color):
         text_color = DARK_MODE_TEXT if self.theme == "Dark" else LIGHT_MODE_TEXT
         return (
             f"QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {background_color}, stop:1 {self.adjust_color(background_color, -20)}); "
-            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 10px 20px; font-weight: 500; font-size: 14px; }}"
+            f"color: {TEXT_COLOR}; border: none; border-radius: {BUTTON_BORDER_RADIUS}; padding: 12px 24px; "
+            f"font-weight: 500; font-size: 14px; }}"
             f"QPushButton:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {hover_color}, stop:1 {self.adjust_color(hover_color, -20)}); }}"
             f"QPushButton:pressed {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {pressed_color}, stop:1 {self.adjust_color(pressed_color, -20)}); }}"
         )
@@ -851,13 +857,13 @@ class MojoBrowser(QMainWindow):
         return (
             f"QLineEdit, QComboBox, QTextEdit {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
             f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; "
-            f"border-radius: {BORDER_RADIUS}; padding: 8px; font-size: 14px; }}"
+            f"border-radius: {BORDER_RADIUS}; padding: 10px; font-size: 14px; }}"
             f"QLineEdit:focus, QComboBox:focus {{ border: 2px solid {PRIMARY_COLOR}; }}"
         )
 
     def get_checkbox_style(self):
         theme = self.theme
-        return f"QCheckBox {{ color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; padding: 6px; font-weight: 500; font-size: 14px; }}"
+        return f"QCheckBox {{ color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; padding: 8px; font-weight: 500; font-size: 14px; }}"
 
     def get_label_style(self):
         theme = self.theme
@@ -871,8 +877,8 @@ class MojoBrowser(QMainWindow):
         )
         return (
             f"QListWidget {{ background-color: {list_background}; color: {list_text_color}; "
-            f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-radius: {BORDER_RADIUS}; padding: 8px; font-size: 14px; }}"
-            "QListWidget::item { padding: 8px; }"
+            f"border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; border-radius: {BORDER_RADIUS}; padding: 10px; font-size: 14px; }}"
+            "QListWidget::item { padding: 10px; }"
             f"QListWidget::item:selected {{ background-color: {list_selected_background}; }}"
         )
 
@@ -1044,7 +1050,7 @@ class MojoBrowser(QMainWindow):
         menu = QMenu(self)
         menu.setStyleSheet(
             f"QMenu {{ background-color: {DARK_MODE_ACCENT if self.theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 14px; }}"
+            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 6px; font-size: 14px; }}"
             f"QMenu::item:selected {{ background-color: {PRIMARY_COLOR}; color: {TEXT_COLOR}; }}"
         )
         menu.addAction("Rename Tab", lambda: self.rename_tab(index))
@@ -1191,72 +1197,122 @@ class MojoBrowser(QMainWindow):
 
     def toggle_reader_mode(self):
         browser = self.tabs.currentWidget()
-        if not browser:
-            return
-        
-        if not self.javascript_enabled:
-            QMessageBox.warning(self, "JavaScript Disabled", "Reader Mode requires JavaScript to be enabled. Please enable it in Settings.", QMessageBox.Ok)
+        if not browser or not self.javascript_enabled:
+            if not self.javascript_enabled:
+                QMessageBox.warning(self, "JavaScript Disabled", "Reader Mode requires JavaScript.", QMessageBox.Ok)
             return
 
-        if hasattr(browser, 'reader_mode_active') and browser.reader_mode_active:
-            restore_js = """
-            document.body.innerHTML = document.querySelector('#original-content').innerHTML;
-            document.querySelector('#original-content').remove();
-            document.body.style.backgroundColor = '';
-            document.body.style.padding = '';
-            """
-            browser.page().runJavaScript(restore_js)
+        if getattr(browser, 'reader_mode_active', False):
+            browser.page().runJavaScript("""
+            var orig = document.getElementById('original-content');
+            if (orig) {
+                document.body.innerHTML = orig.innerHTML;
+                document.body.removeAttribute('style');
+                orig.remove();
+                window.scrollTo(0, window.readerScroll || 0);
+            }
+            """)
             browser.reader_mode_active = False
-            self.statusBar().showMessage("Reader Mode Disabled", 2000)
+            self.statusBar().showMessage("Reader Mode Off", 2000)
             return
 
-        store_content_js = """
-        if (!document.querySelector('#original-content')) {
-            const originalContent = document.createElement('div');
-            originalContent.id = 'original-content';
-            originalContent.innerHTML = document.body.innerHTML;
-            document.body.appendChild(originalContent);
-        }
-        """
-        browser.page().runJavaScript(store_content_js)
+        browser.page().runJavaScript("""
+        var orig = document.createElement('div');
+        orig.id = 'original-content';
+        orig.style.display = 'none';
+        orig.innerHTML = document.body.innerHTML;
+        document.body.appendChild(orig);
+        window.readerScroll = window.scrollY;
+        """)
 
         reader_js = """
         (function() {
-            let content = document.querySelector('article, main, .content, .article') || document.body;
-            if (!content) {
-                content = document.body;
+            function getContent() {
+                const tags = ['article','main','[role="main"]','.content','.post','.article-body',
+                    '.story-body','.entry-content','#main-content','.post-content','.article__content',
+                    '[itemprop="articleBody"]','.zn-body__paragraph','.storytext','.post-body',
+                    '#article-content','.entry','.wp-post-content','.articleBody','.article-content',
+                    '.td-post-content'];
+                let best = null, max = 0;
+                for (let i = 0; i < tags.length; i++) {
+                    const els = document.querySelectorAll(tags[i]);
+                    for (let j = 0; j < els.length; j++) {
+                        const el = els[j], len = el.textContent.length, ps = el.getElementsByTagName('p').length;
+                        const score = len + ps * 60;
+                        if (score > max && len > 100) {
+                            best = el;
+                            max = score;
+                        }
+                    }
+                }
+                if (!best) {
+                    const ps = document.getElementsByTagName('p'), div = document.createElement('div');
+                    let count = 0;
+                    for (let i = 0; i < ps.length && count < 20; i++) {
+                        if (ps[i].textContent.length > 40) {
+                            div.appendChild(ps[i].cloneNode(true));
+                            count++;
+                        }
+                    }
+                    return count > 1 ? div : document.body.cloneNode(true);
+                }
+                return best.cloneNode(true);
             }
 
-            const unwanted = ['script', 'style', 'nav', 'header', 'footer', 'aside', 'form', 'button', 'input', '.ad', '.advertisement'];
-            unwanted.forEach(selector => {
-                document.querySelectorAll(selector).forEach(el => el.remove());
-            });
+            const content = getContent(), remove = ['script','style','nav','header','footer','aside',
+                'form','button','input','select','textarea','[class*="ad"]','[id*="ad"]',
+                '[class*="banner"]','[id*="banner"]','[class*="sidebar"]','[role="complementary"]',
+                '[aria-hidden="true"]','[class*="comment"]','[id*="comment"]','[class*="widget"]',
+                '[id*="widget"]','.social-share','.related-posts','.author-bio'];
+            for (let i = 0; i < remove.length; i++) {
+                const els = content.querySelectorAll(remove[i]);
+                for (let j = els.length - 1; j >= 0; j--) els[j].remove();
+            }
 
-            document.querySelectorAll('img').forEach((img, index) => {
-                if (index > 5) img.remove();
-            });
+            const media = content.querySelectorAll('img,video,picture');
+            for (let i = 0, m = 0; i < media.length && m < 8; i++) {
+                const el = media[i];
+                if (el.tagName === 'IMG' || el.tagName === 'PICTURE') {
+                    const img = el.tagName === 'PICTURE' ? el.querySelector('img') : el;
+                    if (img) {
+                        img.src = img.src || img.getAttribute('data-src') || '';
+                        img.srcset = '';
+                    }
+                } else if (el.tagName === 'VIDEO') el.controls = true;
+                m++;
+                if (m === 8) while (++i < media.length) media[i].remove();
+            }
 
-            const readerContent = document.createElement('div');
-            readerContent.id = 'reader-content';
-            readerContent.innerHTML = content.innerHTML;
+            const title = document.querySelector('h1,h2,[class*="title"],[id*="title"],.headline,' +
+                '.post-title,[itemprop="headline"],.entry-title,.article-header') || document.createElement('h1');
+            title.textContent = title.textContent.trim() || document.title.split(/[-|–]/)[0].trim();
 
-            readerContent.style.maxWidth = '800px';
-            readerContent.style.margin = '20px auto';
-            readerContent.style.fontSize = '18px';
-            readerContent.style.lineHeight = '1.6';
-            readerContent.style.fontFamily = 'Georgia, Times, serif';
-            readerContent.style.color = '#333';
-            readerContent.style.backgroundColor = '#fff';
-            readerContent.style.padding = '20px';
-            readerContent.style.borderRadius = '8px';
-            readerContent.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            const div = document.createElement('div');
+            div.appendChild(title.cloneNode(true));
+            div.appendChild(content);
 
             document.body.innerHTML = '';
-            document.body.appendChild(readerContent);
-            document.body.style.backgroundColor = '#f5f5f5';
-            document.body.style.padding = '20px';
+            document.body.style.cssText = 'background:#f7fafc;margin:0;padding:0';
+            document.body.appendChild(div);
+
+            const css = document.createElement('style');
+            css.textContent = '#reader-content{margin:30px auto;padding:20px;background:#fff;max-width:900px;}' +
+                'h1{font-size:32px;margin:0 0 20px;color:#111827;}' +
+                'p{font-size:17px;margin:0 0 15px;color:#1f2a44;line-height:1.7;}' +
+                'h2,h3,h4,h5,h6{color:#374151;margin:20px 0 10px;}' +
+                'h2{font-size:26px;}h3{font-size:22px;}' +
+                'img,video{max-width:100%;margin:15px auto;display:block;}' +
+                'a{color:#2563eb;text-decoration:none;}' +
+                'a:hover{color:#2563eb;text-decoration:none;}' +
+                'blockquote{margin:15px 0;padding:10px 15px;border-left:4px solid #e5e7eb;background:#f9fafb;color:#4b5563;}' +
+                'pre{background:#f4f4f5;padding:10px;overflow-x:auto;}';
+            document.head.appendChild(css);
+
+            window.scrollTo(0, 0);
         })();
         """
+        browser.page().runJavaScript(reader_js, lambda _: setattr(browser, 'reader_mode_active', True))
+        self.statusBar().showMessage("Reader Mode On", 2000)
         browser.page().runJavaScript(reader_js)
         browser.reader_mode_active = True
         self.statusBar().showMessage("Reader Mode Enabled", 2000)
@@ -1291,7 +1347,7 @@ class MojoBrowser(QMainWindow):
         menu = QMenu(self)
         menu.setStyleSheet(
             f"QMenu {{ background-color: {DARK_MODE_ACCENT if self.theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 5px; font-size: 14px; }}"
+            f"color: {DARK_MODE_TEXT if self.theme == 'Dark' else LIGHT_MODE_TEXT}; border-radius: {BORDER_RADIUS}; padding: 6px; font-size: 14px; }}"
             f"QMenu::item:selected {{ background-color: {PRIMARY_COLOR}; color: {TEXT_COLOR}; }}"
         )
         menu.addAction("Back", self.browser_back)
