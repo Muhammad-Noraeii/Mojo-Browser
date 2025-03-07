@@ -1,174 +1,139 @@
-Here's a revamped, modernized README for your "Mojo Browser" project. This version uses a sleek, concise, and visually appealing style with emojis, badges, and a focus on developer-friendly content. It's optimized for GitHub and designed to grab attention while providing all essential info.
+
+
+# Mojo Browser
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/downloads/)
+[![PyQt5](https://img.shields.io/badge/PyQt5-5.15-green)](https://pypi.org/project/PyQt5/)
+[![GitHub Issues](https://img.shields.io/github/issues/Muhammad-Noraeii/Mojo-Browser)](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/Muhammad-Noraeii/Mojo-Browser)](https://github.com/Muhammad-Noraeii/Mojo-Browser/stargazers)
+
+A privacy-centric, lightweight web browser built with Python and PyQt5. Mojo Browser offers robust security features, extension support, and a modern, customizable interface.
 
 ---
 
-# 🌟 Mojo Browser
+## Table of Contents
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/Muhammad-Noraeii/Mojo-Browser?style=flat-square&color=3B82F6)  
-![GitHub stars](https://img.shields.io/github/stars/Muhammad-Noraeii/Mojo-Browser?style=flat-square&color=F59E0B)  
-![License](https://img.shields.io/github/license/Muhammad-Noraeii/Mojo-Browser?style=flat-square&color=475569)  
-
-**A next-gen, privacy-first web browser powered by Python & PyQt5.**  
-Surf the web with style, speed, and security—all in one open-source package.
-
----
-
-## 🚀 What’s Mojo Browser?
-
-Mojo Browser is your ticket to a cleaner, faster, and safer internet. Built from the ground up with modern web standards in mind, it blends cutting-edge privacy tools with a slick UI and extensibility via JavaScript plugins.
-
-### ✨ Killer Features
-- 🔒 **Privacy Superpowers**: HTTPS-only mode, tracker/ad blocking, proxy rotation, anti-fingerprinting.
-- 🎨 **Custom Vibes**: Dark/Light/System themes, tab pinning, reader mode.
-- ⚡ **Performance Boost**: Hardware acceleration, tab suspension, cache control.
-- 🧩 **Extension Game**: Load JS extensions from `mojox.org` or your own stash.
-- 🌐 **Search Your Way**: Pick from Google, DuckDuckGo, Mojeek, and more.
-
-**Current Version**: *v0.2.5* (March 05, 2025)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+- [Contact](#contact)
 
 ---
 
-## 🎥 Sneak Peek
+## Features
 
-| Light Mode | Dark Mode | Extensions |
-|------------|-----------|------------|
-| ![Light Mode](screenshots/light-mode.png) | ![Dark Mode](screenshots/dark-mode.png) | ![Extensions](screenshots/extensions.png) |
-
+- **Privacy & Security**: Tracker blocking, proxy support, HTTPS enforcement, and anti-fingerprinting.
+- **Extensions**: Load JavaScript extensions from MojoX or custom sources.
+- **Themes**: Dark, Light, or System theme options.
+- **Performance**: Hardware acceleration, tab suspension, and configurable cache limits.
+- **Search Engines**: Supports Google, DuckDuckGo, Mojeek, and more.
+- **Extras**: Reader mode, bookmarks, history, and download manager.
 
 ---
 
-## 🛠️ Get Started
+## Installation
 
 ### Prerequisites
-- Python 3.8+ 🐍
-- PyQt5 + WebEngine (`pip install PyQt5 PyQt5.QtWebEngine`)
-- `requests` (`pip install requests`)
+- **Python**: 3.8 or higher
+- **Dependencies**: PyQt5, PyQtWebEngine, Requests
 
-### Install & Run
-1. **Grab the Code**:
+### Steps
+1. **Clone the Repository**:
    ```bash
    git clone https://github.com/Muhammad-Noraeii/Mojo-Browser.git
    cd Mojo-Browser
    ```
 
-2. **Set It Up**:
+2. **Install Dependencies**:
+   ```bash
+   pip install PyQt5 PyQtWebEngine requests
+   ```
+   Alternatively, if a `requirements.txt` is added:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Launch**:
+3. **Run the Browser**:
    ```bash
    python main.py
    ```
 
-4. **Optional Build**:
+4. **Optional**: Add icons to an `icons/` folder (e.g., `app_icon.png`) for full UI experience.
+
+---
+
+## Usage
+
+- Launch the browser with `python main.py`.
+- Use the toolbar to navigate, manage tabs, or access settings.
+- Configure privacy options, themes, and extensions via the Settings menu.
+- Double-click bookmarks or history items to visit saved URLs.
+
+For detailed controls, check the [shortcuts](#shortcuts) section below.
+
+### Shortcuts
+- `Ctrl+T`: New tab
+- `Ctrl+W`: Close tab
+- `Ctrl+R` or `F5`: Reload page
+- `F11`: Toggle fullscreen
+- `Ctrl+Shift+R`: Toggle reader mode
+
+---
+
+## Contributing
+
+We welcome contributions! Here's how to get started:
+
+1. **Fork the Repository**: Click "Fork" on GitHub.
+2. **Clone Your Fork**:
    ```bash
-   pyinstaller --onefile --icon=icons/app_icon.png main.py
+   git clone https://github.com/YOUR_USERNAME/Mojo-Browser.git
    ```
-
-*(No `requirements.txt` yet? Create one with: `PyQt5==5.15.9`, `PyQtWebEngine==5.15.6`, `requests==2.28.1`)*
-
----
-
-## 🎮 How to Use
-
-- **Start Browsing**: Fire it up with `python main.py`.
-- **Navigate**: Hit the toolbar or type in the address bar.
-- **Tweak It**: Open Settings (`Ctrl + ,`) for privacy, themes, and more.
-- **Extend It**: Add JS extensions via the Extensions menu.
-- **Shortcuts**: 
-  - `Ctrl + T` → New Tab  
-  - `Ctrl + R` → Reload  
-  - `F11` → Fullscreen  
-  - Check `main.py` for the full list!
-
----
-
-## 📂 Project Layout
-
-```
-Mojo-Browser/
-├── addon.py           # Extension magic ✨
-├── MojoPrivacy.py     # Privacy shield 🛡️
-├── main.py            # Core app 🚀
-├── extensions/        # JS plugins live here
-├── icons/             # App bling 
-├── screenshots/       # Show-off pics
-└── README.md          # You’re here!
-```
-
----
-
-## ⚙️ Customize
-
-Settings live in `settings.json`. Edit via the app or tweak by hand:
-- `home_page`: Your launchpad URL
-- `theme`: Dark, Light, or System
-- `privacy_settings`: Toggle tracker blocks, HTTPS, etc.
-
----
-
-## 🤝 Contribute
-
-Love Mojo? Join the party!
-
-1. **Fork It**: Hit that Fork button on GitHub.
-2. **Clone**:
+3. **Create a Branch**:
    ```bash
-   git clone https://github.com/Muhammad-Noraeii/Mojo-Browser.git
+   git checkout -b feature/your-feature-name
    ```
-3. **Branch Out**:
+4. **Commit Changes**:
    ```bash
-   git checkout -b feat/your-cool-idea
+   git commit -m "Add your message here"
    ```
-4. **Push It**:
+5. **Push to Your Fork**:
    ```bash
-   git push origin feat/your-cool-idea
+   git push origin feature/your-feature-name
    ```
-5. **PR Time**: Open a Pull Request to `Muhammad-Noraeii/Mojo-Browser`.
+6. **Submit a Pull Request**: Open a PR on the main repo.
 
-**Tips**: Stick to PEP 8, test locally, and keep docs fresh.
-
----
-
-## 🌍 Roadmap
-
-- [ ] Multi-profile awesomeness
-- [ ] Built-in VPN vibes
-- [ ] Beefier extension API
-- [ ] Mobile Mojo (PyQt mobile)
-- [ ] Auto-updates FTW
+Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
 
 ---
 
-## 👥 Credits
+## License
 
-- **Creator**: [Muhammad-Noraeii](https://github.com/Muhammad-Noraeii)  
-- **Co-Pilot**: [Guguss-31](https://github.com/Guguss-31)  
-- **Tech Stack**: Python, PyQt5, Qt WebEngine
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📜 License
+## Acknowledgements
 
-MIT License—free to use, tweak, and share. See [LICENSE](LICENSE) for details.  
-*(Add a `LICENSE` file with MIT text if missing!)*
-
----
-
-## 📬 Let’s Talk
-
-- **Issues**: Bugs or ideas? Drop them [here](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues).
-- **Connect**: Ping me via GitHub.
-
-**Star the repo if you vibe with Mojo! ⭐**
+- **PyQt5 Team**: For the powerful GUI framework.
+- **Contributor**: [Muhammad-Noraeii](https://github.com/Muhammad-Noraeii)
+- **Coach** : [Gwrvan Barré](https://github.com/Guguss-31)
+- **Community**: Thanks to all users and testers!
 
 ---
 
-### To-Do for You
-- **Screenshots**: Pop some in `screenshots/` and update the links.
-- **Requirements**: Add `requirements.txt` with the deps listed.
-- **License**: Drop an MIT `LICENSE` file in the root.
-- **Icon**: Confirm `icons/app_icon.png` exists, or ditch the badge if not.
+## Contact
 
-Want more flair or tweaks? Let me know!
+- **Maintainer**: [Muhammad Noraeii](https://github.com/Muhammad-Noraeii)
+- **Issues**: Report bugs or suggest features [here](https://github.com/Muhammad-Noraeii/Mojo-Browser/issues).
+- **Email**: Muhammad.Noraeii@gmail.com
+
+### By Muhammad Noraeii
+#### 3/5/2025
+
+Star the project if you like it! ⭐
+
