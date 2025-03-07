@@ -121,6 +121,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 - **PyQt5 Team**: For the powerful GUI framework.
 - **Contributor**: [Muhammad-Noraeii](https://github.com/Muhammad-Noraeii)
+- **Coach** : [Gwrvan Barré](https://github.com/Guguss-31)
 - **Community**: Thanks to all users and testers!
 
 ---
