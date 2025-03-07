@@ -59,10 +59,12 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
             logger.error(f"Invalid JSON in privacy_settings.json: {str(e)}")
             self.https_only = True
             self.permissions = {}
+            self.parent.statusBar().showMessage(f"Invalid privacy settings file: {str(e)}", 5000)
         except Exception as e:
             logger.error(f"Failed to load privacy settings: {str(e)}")
             self.https_only = True
             self.permissions = {}
+            self.parent.statusBar().showMessage(f"Failed to load privacy settings: {str(e)}", 5000)
 
     def save_privacy_settings(self):
         try:
@@ -93,7 +95,7 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                 self.parent.statusBar().showMessage(f"Initialized {len(self.working_proxies)} proxies", 3000)
         except Exception as e:
             logger.error(f"Failed to initialize proxies: {str(e)}")
-            self.parent.statusBar().showMessage("Failed to initialize proxies", 5000)
+            self.parent.statusBar().showMessage(f"Failed to initialize proxies: {str(e)}", 5000)
 
     def test_proxy(self, proxy, timeout=5000):
         if proxy in self.proxy_cache:
@@ -160,7 +162,7 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
             logger.error(f"Failed to set proxy: {str(e)}")
             self.proxy_settings = None
             QNetworkProxy.setApplicationProxy(QNetworkProxy(QNetworkProxy.NoProxy))
-            self.parent.statusBar().showMessage("No functional proxy available", 5000)
+            self.parent.statusBar().showMessage(f"No functional proxy available: {str(e)}", 5000)
 
     def apply_proxy(self, profile):
         try:
@@ -175,7 +177,7 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                 logger.info("No proxy applied")
         except Exception as e:
             logger.error(f"Failed to apply proxy to profile: {str(e)}")
-            self.parent.statusBar().showMessage("Failed to apply proxy settings", 5000)
+            self.parent.statusBar().showMessage(f"Failed to apply proxy settings: {str(e)}", 5000)
 
     def interceptRequest(self, info):
         try:
