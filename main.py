@@ -390,11 +390,12 @@ class SettingsDialog(QDialog):
         self.about_text.setReadOnly(True)
         self.about_text.setStyleSheet(self.parent.get_input_style())
         self.about_text.setText(
-            "Mojo Browser | v0.2.4 Enhanced\n\n"
+            "Mojo Browser | v0.2.5 Alpha\n\n"
             "Developed using PyQt5 & Python.\nEnhanced Features:\n"
             "- Dark/Light/System themes\n- Multiple search engines\n- Advanced security options\n"
             "- Performance optimizations\n- Proxy & fingerprint protection\n"
             "- System tray integration\n- Improved UI/UX\n- JavaScript extension support from mojox.org\n"
+            "** Mojo Browser ** : an idea by Muhammad Noraeii"
             "\n"
             "GitHub: https://Github.com/Muhammad-Noraeii\nhttps://Github.com/Guguss-31/"
         )
