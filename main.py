@@ -1289,6 +1289,7 @@ class MojoBrowser(QMainWindow):
             title.textContent = title.textContent.trim() || document.title.split(/[-|–]/)[0].trim();
 
             const div = document.createElement('div');
+            div.id = 'reader-content';
             div.appendChild(title.cloneNode(true));
             div.appendChild(content);
 
@@ -1310,6 +1311,36 @@ class MojoBrowser(QMainWindow):
             document.head.appendChild(css);
 
             window.scrollTo(0, 0);
+
+            const controls = document.createElement('div');
+            controls.id = 'reader-controls';
+            controls.style.cssText = 'position:fixed;top:10px;right:10px;background:#fff;padding:10px;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,0.1);z-index:1000;';
+            controls.innerHTML = `
+                <label for="font-size">Font Size:</label>
+                <input type="range" id="font-size" name="font-size" min="12" max="36" value="17">
+                <label for="font-family">Font:</label>
+                <select id="font-family" name="font-family">
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+                <label for="bg-color">Background:</label>
+                <input type="color" id="bg-color" name="bg-color" value="#f7fafc">
+            `;
+            document.body.appendChild(controls);
+
+            document.getElementById('font-size').addEventListener('input', function() {
+                document.querySelector('#reader-content').style.fontSize = this.value + 'px';
+            });
+
+            document.getElementById('font-family').addEventListener('change', function() {
+                document.querySelector('#reader-content').style.fontFamily = this.value;
+            });
+
+            document.getElementById('bg-color').addEventListener('input', function() {
+                document.querySelector('#reader-content').style.backgroundColor = this.value;
+            });
         })();
         """
         browser.page().runJavaScript(reader_js, lambda _: setattr(browser, 'reader_mode_active', True))
