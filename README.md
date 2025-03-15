@@ -3,7 +3,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.2.5%20Alpha-orange.svg)](https://github.com/Muhammad-Noraeii/Mojo-Browser/releases)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()  
-[![Downloads](https://img.shields.io/github/downloads/Muhammad-Noraeii/Mojo-Browser/total.svg)]() 
+[![GitHub Stars](https://img.shields.io/github/stars/Muhammad-Noraeii/Mojo-Browser)](https://github.com/Muhammad-Noraeii/Mojo-Browser/stargazers)
+
 
 **A privacy-focused web browser built with PyQt5 and Python.**
 
