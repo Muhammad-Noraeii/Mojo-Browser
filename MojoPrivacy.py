@@ -2,7 +2,8 @@ import os
 import json
 import random
 import logging
-from PyQt5.QtCore import QUrl, QTimer, QEventLoop, QTime
+from typing import Optional, List, Dict
+from PyQt5.QtCore import QUrl, QTimer, QEventLoop, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
@@ -13,195 +14,218 @@ logger = logging.getLogger(__name__)
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/119.0"
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/119.0",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
 ]
 
 TRACKER_PATTERNS = [
-    r"google-analytics\.com",
-    r"doubleclick\.net",
-    r"adservice\.google\.",
-    r"facebook\.com/tr",
-    r"twitter\.com/i/"
+    r"google-analytics\.com", r"doubleclick\.net", r"adservice\.google\.",
+    r"facebook\.com/tr", r"twitter\.com/i/", r"pixel\.quantserve\.com",
+    r"scorecardresearch\.com", r"adnxs\.com", r"outbrain\.com", r"taboola\.com",
+    r"mixpanel\.com", r"hotjar\.com", r"quantcast\.com", r"krxd\.net",
 ]
 
 PROXY_LIST = [
     "88.135.41.109:4145", "103.251.223.105:6084", "182.160.110.154:9898",
-    "198.44.171.161:7088", "104.207.53.203:3128"
+    "198.44.171.161:7088", "104.207.53.203:3128", "69.75.140.157:8080",
+    "27.147.221.140:5678", "188.132.150.162:8080", "103.120.76.94:2024",
+    "144.126.201.25:8192", "101.47.129.222:20000", "156.228.104.70:3128",
 ]
+
+class ProxyTester(QThread):
+    result = pyqtSignal(str, bool)
+
+    def __init__(self, proxy: str, timeout: int = 5000):
+        super().__init__()
+        self.proxy = proxy
+        self.timeout = timeout
+
+    def run(self):
+        manager = QNetworkAccessManager()
+        try:
+            host, port = self.proxy.split(":")
+            proxy_obj = QNetworkProxy(QNetworkProxy.HttpProxy, host, int(port))
+            manager.setProxy(proxy_obj)
+            request = QNetworkRequest(QUrl("https://httpbin.org/get"))
+            request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.NoLessSafeRedirectPolicy)
+            reply = manager.get(request)
+            loop = QEventLoop()
+            timer = QTimer()
+            timer.setSingleShot(True)
+            timer.timeout.connect(loop.quit)
+            timer.start(self.timeout)
+            reply.finished.connect(loop.quit)
+            loop.exec_()
+            success = reply.error() == QNetworkRequest.NoError and reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 200
+            self.result.emit(self.proxy, success)
+            reply.deleteLater()
+        except Exception:
+            self.result.emit(self.proxy, False)
 
 class PrivacyEngine(QWebEngineUrlRequestInterceptor):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        self.https_only = True
-        self.permissions = {}
-        self.proxy_settings = None
-        self.proxy_list = PROXY_LIST[:]
-        self.working_proxies = []
-        self.network_manager = QNetworkAccessManager()
-        self.proxy_cache = {}
+        self.https_only: bool = True
+        self.permissions: Dict[str, dict] = {}
+        self.proxy_settings: Optional[QNetworkProxy] = None
+        self.proxy_list: List[str] = PROXY_LIST[:]
+        self.working_proxies: List[str] = []
+        self.proxy_cache: Dict[str, bool] = {}
+        self.proxy_cache_file = "proxy_cache.json"
         self.load_privacy_settings()
+        self.load_proxy_cache()
         self.initialize_proxies()
 
-    def load_privacy_settings(self):
+    def load_privacy_settings(self) -> None:
         try:
             if os.path.exists("privacy_settings.json"):
                 with open("privacy_settings.json", "r", encoding="utf-8") as f:
                     settings = json.load(f)
                     self.https_only = settings.get("https_only", True)
                     self.permissions = settings.get("permissions", {})
-                logger.info("Loaded privacy settings from privacy_settings.json")
             else:
-                self.https_only = True
-                self.permissions = {}
-                logger.info("No privacy_settings.json found, using default settings")
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in privacy_settings.json: {str(e)}")
-            self.https_only = True
-            self.permissions = {}
-            self.parent.statusBar().showMessage(f"Invalid privacy settings file: {str(e)}", 5000)
+                self.save_privacy_settings()
         except Exception as e:
             logger.error(f"Failed to load privacy settings: {str(e)}")
+            self.parent.statusBar().showMessage(f"Privacy settings error: {str(e)}", 5000)
             self.https_only = True
             self.permissions = {}
-            self.parent.statusBar().showMessage(f"Failed to load privacy settings: {str(e)}", 5000)
 
-    def save_privacy_settings(self):
+    def save_privacy_settings(self) -> None:
         try:
             with open("privacy_settings.json", "w", encoding="utf-8") as f:
-                json.dump({
-                    "https_only": self.https_only,
-                    "permissions": self.permissions
-                }, f, indent=4)
-            logger.info("Saved privacy settings to privacy_settings.json")
+                json.dump({"https_only": self.https_only, "permissions": self.permissions}, f, indent=4)
         except Exception as e:
             logger.error(f"Failed to save privacy settings: {str(e)}")
             self.parent.statusBar().showMessage(f"Failed to save privacy settings: {str(e)}", 5000)
 
-    def initialize_proxies(self):
+    def load_proxy_cache(self) -> None:
         try:
-            self.parent.statusBar().showMessage("Testing proxies...", 5000)
-            for proxy in self.proxy_list:
-                if proxy not in self.proxy_cache:
-                    self.proxy_cache[proxy] = self.test_proxy(proxy, timeout=3000)
-                if self.proxy_cache[proxy]:
-                    self.working_proxies.append(proxy)
-            if not self.working_proxies:
-                logger.error("No working proxies found.")
-                self.parent.statusBar().showMessage("No functional proxies available", 5000)
-            else:
-                self.set_random_proxy()
-                logger.info(f"Initialized {len(self.working_proxies)} working proxies: {self.working_proxies}")
-                self.parent.statusBar().showMessage(f"Initialized {len(self.working_proxies)} proxies", 3000)
+            if os.path.exists(self.proxy_cache_file):
+                with open(self.proxy_cache_file, "r", encoding="utf-8") as f:
+                    self.proxy_cache = json.load(f)
         except Exception as e:
-            logger.error(f"Failed to initialize proxies: {str(e)}")
-            self.parent.statusBar().showMessage(f"Failed to initialize proxies: {str(e)}", 5000)
+            logger.error(f"Failed to load proxy cache: {str(e)}")
+            self.proxy_cache = {}
 
-    def test_proxy(self, proxy, timeout=5000):
-        if proxy in self.proxy_cache:
-            return self.proxy_cache[proxy]
+    def save_proxy_cache(self) -> None:
+        try:
+            with open(self.proxy_cache_file, "w", encoding="utf-8") as f:
+                json.dump(self.proxy_cache, f, indent=4)
+        except Exception as e:
+            logger.error(f"Failed to save proxy cache: {str(e)}")
+
+    def initialize_proxies(self) -> None:
+        self.parent.statusBar().showMessage("Testing proxies...", 5000)
+        self.working_proxies.clear()
+        untested_proxies = [p for p in self.proxy_list if p not in self.proxy_cache]
+        self.testers = []
+
+        if not untested_proxies:
+            self.working_proxies = [p for p, works in self.proxy_cache.items() if works]
+            self.finalize_proxy_init()
+            return
+
+        for proxy in untested_proxies:
+            tester = ProxyTester(proxy, timeout=3000)
+            tester.result.connect(self.on_proxy_tested)
+            self.testers.append(tester)
+            tester.start()
+
+    @pyqtSlot(str, bool)
+    def on_proxy_tested(self, proxy: str, success: bool) -> None:
+        self.proxy_cache[proxy] = success
+        if success:
+            self.working_proxies.append(proxy)
+        self.testers = [t for t in self.testers if t.isRunning()]
+        if not self.testers:
+            self.save_proxy_cache()
+            self.finalize_proxy_init()
+
+    def finalize_proxy_init(self) -> None:
+        if not self.working_proxies:
+            logger.error("No working proxies found")
+            self.parent.statusBar().showMessage("No functional proxies available", 5000)
+        else:
+            self.set_random_proxy()
+            self.parent.statusBar().showMessage(f"Initialized {len(self.working_proxies)} proxies", 3000)
+
+    def test_proxy(self, proxy: str) -> bool:
+        manager = QNetworkAccessManager()
         try:
             host, port = proxy.split(":")
-            proxy_obj = QNetworkProxy()
-            proxy_obj.setType(QNetworkProxy.HttpProxy)
-            proxy_obj.setHostName(host)
-            proxy_obj.setPort(int(port))
-            self.network_manager.setProxy(proxy_obj)
+            proxy_obj = QNetworkProxy(QNetworkProxy.HttpProxy, host, int(port))
+            manager.setProxy(proxy_obj)
             request = QNetworkRequest(QUrl("https://httpbin.org/get"))
-            request.setAttribute(QNetworkRequest.RedirectPolicyAttribute, QNetworkRequest.NoLessSafeRedirectPolicy)
-            reply = self.network_manager.get(request)
+            reply = manager.get(request)
             loop = QEventLoop()
-            timer = QTimer()
-            timer.setSingleShot(True)
-            timer.timeout.connect(loop.quit)
-            timer.start(timeout)
+            QTimer.singleShot(3000, loop.quit)
             reply.finished.connect(loop.quit)
             loop.exec_()
-            success = reply.error() == QNetworkRequest.NoError and reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 200
-            if success:
-                logger.info(f"Proxy {proxy} is functional")
-            else:
-                logger.warning(f"Proxy {proxy} failed: {reply.errorString()}")
-            self.proxy_cache[proxy] = success
-            return success
-        except ValueError:
-            logger.error(f"Invalid proxy format: {proxy}")
-            self.proxy_cache[proxy] = False
-            return False
-        except Exception as e:
-            logger.warning(f"Proxy {proxy} test failed: {str(e)}")
-            self.proxy_cache[proxy] = False
+            return reply.error() == QNetworkRequest.NoError and reply.attribute(QNetworkRequest.HttpStatusCodeAttribute) == 200
+        except Exception:
             return False
         finally:
-            self.network_manager.setProxy(QNetworkProxy(QNetworkProxy.NoProxy))
+            manager.deleteLater()
 
-    def set_random_proxy(self, specific_proxy=None):
+    def set_random_proxy(self, specific_proxy: Optional[str] = None) -> None:
         try:
             if specific_proxy:
                 if specific_proxy in self.working_proxies:
                     proxy = specific_proxy
-                elif self.test_proxy(specific_proxy):
+                elif specific_proxy in self.proxy_list and self.test_proxy(specific_proxy):
                     proxy = specific_proxy
                     self.working_proxies.append(proxy)
+                    self.proxy_cache[proxy] = True
+                    self.save_proxy_cache()
                 else:
-                    logger.warning(f"Specified proxy {specific_proxy} not functional")
-                    proxy = None
+                    raise ValueError(f"Proxy {specific_proxy} not functional")
             else:
                 if not self.working_proxies:
-                    raise Exception("No working proxies available")
+                    raise ValueError("No working proxies available")
                 proxy = random.choice(self.working_proxies)
+
             host, port = proxy.split(":")
-            self.proxy_settings = QNetworkProxy()
-            self.proxy_settings.setType(QNetworkProxy.HttpProxy)
-            self.proxy_settings.setHostName(host)
-            self.proxy_settings.setPort(int(port))
+            self.proxy_settings = QNetworkProxy(QNetworkProxy.HttpProxy, host, int(port))
             QNetworkProxy.setApplicationProxy(self.proxy_settings)
-            logger.info(f"Using proxy: {proxy}")
             self.parent.statusBar().showMessage(f"Connected via proxy: {proxy}", 5000)
         except Exception as e:
             logger.error(f"Failed to set proxy: {str(e)}")
             self.proxy_settings = None
             QNetworkProxy.setApplicationProxy(QNetworkProxy(QNetworkProxy.NoProxy))
-            self.parent.statusBar().showMessage(f"No functional proxy available: {str(e)}", 5000)
+            self.parent.statusBar().showMessage(f"No functional proxy: {str(e)}", 5000)
 
-    def apply_proxy(self, profile):
+    def apply_proxy(self, profile: QWebEngineProfile) -> None:
         try:
             if self.proxy_settings:
                 QNetworkProxy.setApplicationProxy(self.proxy_settings)
                 profile.clearHttpCache()
-                logger.info("Proxy applied to profile")
             else:
-                no_proxy = QNetworkProxy()
-                no_proxy.setType(QNetworkProxy.NoProxy)
-                QNetworkProxy.setApplicationProxy(no_proxy)
-                logger.info("No proxy applied")
+                QNetworkProxy.setApplicationProxy(QNetworkProxy(QNetworkProxy.NoProxy))
         except Exception as e:
-            logger.error(f"Failed to apply proxy to profile: {str(e)}")
-            self.parent.statusBar().showMessage(f"Failed to apply proxy settings: {str(e)}", 5000)
+            logger.error(f"Failed to apply proxy: {str(e)}")
+            self.parent.statusBar().showMessage(f"Proxy error: {str(e)}", 5000)
 
-    def interceptRequest(self, info):
+    def interceptRequest(self, info) -> None:
         try:
             url = info.requestUrl().toString()
             settings = self.parent.settings_persistence.privacy_settings
 
             if self.https_only and url.startswith("http://"):
                 info.redirect(QUrl(url.replace("http://", "https://")))
-                logger.debug(f"Redirected HTTP to HTTPS for URL: {url}")
                 return
 
             if settings.get("block_third_party_cookies", True):
                 info.setHttpHeader(b"Cookie", b"")
-                logger.debug("Blocked third-party cookies for request")
 
             if settings.get("do_not_track", True):
                 info.setHttpHeader(b"DNT", b"1")
-                logger.debug("Set Do Not Track header")
 
             if settings.get("block_trackers", False):
                 for pattern in TRACKER_PATTERNS:
                     if pattern in url.lower():
                         info.block(True)
-                        logger.info(f"Blocked tracker: {url}")
                         self.parent.statusBar().showMessage(f"Blocked tracker: {url}", 2000)
                         return
 
@@ -210,18 +234,16 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                 perms = self.permissions[host]
                 if not perms.get("allow_cookies", True):
                     info.setHttpHeader(b"Cookie", b"")
-                    logger.debug(f"Blocked cookies for host: {host}")
                 if not perms.get("allow_js", True):
                     info.block(True)
-                    logger.debug(f"Blocked JavaScript for host: {host}")
         except Exception as e:
-            logger.error(f"Error intercepting request for URL {url}: {str(e)}")
+            logger.error(f"Error intercepting request: {str(e)}")
             self.parent.statusBar().showMessage(f"Privacy error: {str(e)}", 5000)
 
-    def spoof_user_agent(self):
+    def spoof_user_agent(self) -> str:
         return random.choice(USER_AGENTS)
 
-    def apply_anti_fingerprinting(self, page):
+    def apply_anti_fingerprinting(self, page: QWebEnginePage) -> None:
         try:
             script = """
             (function() {
@@ -232,7 +254,7 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                         const originalFillRect = ctx.fillRect;
                         ctx.fillRect = function() {
                             originalFillRect.apply(this, arguments);
-                            const noise = Math.random() * 0.1;
+                            const noise = Math.random() * 0.2;
                             const imageData = ctx.getImageData(0, 0, this.width, this.height);
                             for (let i = 0; i < imageData.data.length; i += 4) {
                                 imageData.data[i] += noise;
@@ -245,54 +267,58 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                     return ctx;
                 };
                 Object.defineProperty(window, 'screen', {
-                    value: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080 },
+                    value: { width: 1920, height: 1080, availWidth: 1920, availHeight: 1080, colorDepth: 24, pixelDepth: 24 },
                     writable: false
                 });
+                Object.defineProperty(navigator, 'hardwareConcurrency', { value: 4, writable: false });
+                Object.defineProperty(navigator, 'deviceMemory', { value: 8, writable: false });
+                Object.defineProperty(navigator, 'platform', { value: 'Win32', writable: false });
+                Object.defineProperty(navigator, 'languages', { value: ['en-US', 'en'], writable: false });
+                Object.defineProperty(navigator, 'webdriver', { value: false, writable: false });
+                window.chrome = window.chrome || {};
             })();
             """
             page.runJavaScript(script)
-            logger.info("Applied anti-fingerprinting techniques to page")
         except Exception as e:
-            logger.error(f"Failed to apply anti-fingerprinting: {str(e)}")
-            self.parent.statusBar().showMessage(f"Failed to apply anti-fingerprinting: {str(e)}", 5000)
+            logger.error(f"Anti-fingerprinting failed: {str(e)}")
+            self.parent.statusBar().showMessage(f"Anti-fingerprinting error: {str(e)}", 5000)
 
 class PrivacyPage(QWebEnginePage):
-    def __init__(self, profile, parent=None):
+    def __init__(self, profile: QWebEngineProfile, parent=None):
         super().__init__(profile, parent)
-        self.privacy_engine = None
+        self.privacy_engine: Optional[PrivacyEngine] = None
 
-    def setPrivacyEngine(self, engine):
+    def setPrivacyEngine(self, engine: PrivacyEngine) -> None:
         try:
             self.privacy_engine = engine
             if self.privacy_engine:
                 self.privacy_engine.apply_anti_fingerprinting(self)
                 self.profile().setHttpUserAgent(self.privacy_engine.spoof_user_agent())
                 self.privacy_engine.apply_proxy(self.profile())
-                logger.info("PrivacyEngine applied to page")
         except Exception as e:
             logger.error(f"Failed to set PrivacyEngine: {str(e)}")
-            self.parent().statusBar().showMessage(f"Privacy setup error: {str(e)}", 5000) if self.parent() else None
+            if self.parent():
+                self.parent().statusBar().showMessage(f"Privacy setup error: {str(e)}", 5000)
 
-    def acceptNavigationRequest(self, url, type_, isMainFrame):
+    def acceptNavigationRequest(self, url: QUrl, type_, isMainFrame: bool) -> bool:
         try:
             if self.privacy_engine and self.privacy_engine.https_only and url.toString().startswith("http://"):
                 self.setUrl(QUrl(url.toString().replace("http://", "https://")))
-                logger.debug(f"Redirected HTTP to HTTPS for navigation: {url.toString()}")
                 return False
             return super().acceptNavigationRequest(url, type_, isMainFrame)
         except Exception as e:
-            logger.error(f"Error in navigation request for URL {url.toString()}: {str(e)}")
-            self.parent().statusBar().showMessage(f"Navigation error: {str(e)}", 5000) if self.parent() else None
+            logger.error(f"Navigation error: {str(e)}")
+            if self.parent():
+                self.parent().statusBar().showMessage(f"Navigation error: {str(e)}", 5000)
             return False
 
 def initialize_privacy(browser):
     try:
         privacy_engine = PrivacyEngine(browser)
-        logger.info("Initialized PrivacyEngine for browser")
         return privacy_engine
     except Exception as e:
         logger.error(f"Failed to initialize PrivacyEngine: {str(e)}")
-        browser.statusBar().showMessage(f"Failed to initialize privacy: {str(e)}", 5000)
+        browser.statusBar().showMessage(f"Privacy init failed: {str(e)}", 5000)
         return None
 
 if __name__ == "__main__":
@@ -306,5 +332,6 @@ if __name__ == "__main__":
         sys.exit(app.exec_())
     except Exception as e:
         logger.error(f"Failed to start browser: {str(e)}")
+        from PyQt5.QtWidgets import QMessageBox
         QMessageBox.critical(None, "Error", f"Failed to start browser: {str(e)}", QMessageBox.Ok)
         sys.exit(1)

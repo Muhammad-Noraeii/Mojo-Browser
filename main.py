@@ -109,10 +109,13 @@ class ExtensionsDialog(QDialog):
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
                 item.setCheckState(Qt.Unchecked)
                 self.extensions_list.addItem(item)
+            else:
+                QMessageBox.warning(self, "Download Failed", "Failed to download the extension.", QMessageBox.Ok)
 
     def fetch_store_extensions(self):
         extensions = self.parent.extension_manager.fetch_store_extensions()
         if not extensions:
+            QMessageBox.warning(self, "Fetch Failed", "Failed to fetch extensions from the store.", QMessageBox.Ok)
             return
 
         dialog = QDialog(self)
@@ -390,11 +393,12 @@ class SettingsDialog(QDialog):
         self.about_text.setReadOnly(True)
         self.about_text.setStyleSheet(self.parent.get_input_style())
         self.about_text.setText(
-            "Mojo Browser | v0.2.4 Enhanced\n\n"
+            "Mojo Browser | v0.2.5 Alpha\n\n"
             "Developed using PyQt5 & Python.\nEnhanced Features:\n"
             "- Dark/Light/System themes\n- Multiple search engines\n- Advanced security options\n"
             "- Performance optimizations\n- Proxy & fingerprint protection\n"
             "- System tray integration\n- Improved UI/UX\n- JavaScript extension support from mojox.org\n"
+            "** Mojo Browser ** : an idea by Muhammad Noraeii"
             "\n"
             "GitHub: https://Github.com/Muhammad-Noraeii\nhttps://Github.com/Guguss-31/"
         )
@@ -424,9 +428,13 @@ class SettingsDialog(QDialog):
 
     def clear_cookies(self):
         try:
-            self.parent.tabs.currentWidget().page().profile().clearHttpCache()
-            self.parent.tabs.currentWidget().page().profile().clearAllVisitedLinks()
-            QMessageBox.information(self.parent, "Cookies Cleared", "Cookies have been cleared.", QMessageBox.Ok)
+            current_tab = self.parent.tabs.currentWidget()
+            if isinstance(current_tab, QWebEngineView):
+                current_tab.page().profile().clearHttpCache()
+                current_tab.page().profile().clearAllVisitedLinks()
+                QMessageBox.information(self.parent, "Cookies Cleared", "Cookies have been cleared.", QMessageBox.Ok)
+            else:
+                QMessageBox.warning(self.parent, "Error", "Current tab is not a web page.", QMessageBox.Ok)
         except Exception as e:
             QMessageBox.warning(self.parent, "Error", f"Failed to clear cookies: {str(e)}", QMessageBox.Ok)
 
@@ -578,24 +586,36 @@ class DownloadDialog(QDialog):
         progress.setMaximumWidth(220)
         speed_label = QLabel("0 KB/s")
         speed_label.setMinimumWidth(70)
+        time_label = QLabel("Calculating...")
+        time_label.setMinimumWidth(100)
         cancel_button = QPushButton("Cancel")
         pause_button = QPushButton("Pause")
         pause_button.setStyleSheet(self.parent_browser.get_button_style("#F59E0B", "#FBBF24", "#D97706"))
         download_layout.addWidget(label)
         download_layout.addWidget(progress)
         download_layout.addWidget(speed_label)
+        download_layout.addWidget(time_label)
         download_layout.addWidget(pause_button)
         download_layout.addWidget(cancel_button)
         download_widget.setLayout(download_layout)
         self.downloads_layout.addWidget(download_widget)
         
         last_received = [0]
+        start_time = QTimer()
+        start_time.start()
+        
         def update_speed(received, total):
+            elapsed_time = start_time.elapsed() / 1000
             speed = (received - last_received[0]) / 1024
             speed_label.setText(f"{speed:.1f} KB/s")
             last_received[0] = received
             progress.setValue(int((received / total) * 100))
-        
+            if speed > 0:
+                remaining_time = (total - received) / (speed * 1024)
+                time_label.setText(f"{int(remaining_time // 60)}m {int(remaining_time % 60)}s remaining")
+            else:
+                time_label.setText("Calculating...")
+
         download.downloadProgress.connect(update_speed)
         download.finished.connect(lambda: self.on_download_finished(download, download_widget))
         download.stateChanged.connect(lambda state: self.on_state_changed(state, download_widget, pause_button))
@@ -663,6 +683,7 @@ class MojoBrowser(QMainWindow):
         self.setup_download_manager()
 
         self.settings_persistence.load_settings()
+        self.apply_styles()  
         self.add_new_tab(QUrl(self.home_page))
 
         self.status_bar = QStatusBar()
@@ -1288,6 +1309,7 @@ class MojoBrowser(QMainWindow):
             title.textContent = title.textContent.trim() || document.title.split(/[-|–]/)[0].trim();
 
             const div = document.createElement('div');
+            div.id = 'reader-content';
             div.appendChild(title.cloneNode(true));
             div.appendChild(content);
 
@@ -1309,6 +1331,36 @@ class MojoBrowser(QMainWindow):
             document.head.appendChild(css);
 
             window.scrollTo(0, 0);
+
+            const controls = document.createElement('div');
+            controls.id = 'reader-controls';
+            controls.style.cssText = 'position:fixed;top:10px;right:10px;background:#fff;padding:10px;border-radius:5px;box-shadow:0 0 10px rgba(0,0,0,0.1);z-index:1000;';
+            controls.innerHTML = `
+                <label for="font-size">Font Size:</label>
+                <input type="range" id="font-size" name="font-size" min="12" max="36" value="17">
+                <label for="font-family">Font:</label>
+                <select id="font-family" name="font-family">
+                    <option value="Arial">Arial</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+                <label for="bg-color">Background:</label>
+                <input type="color" id="bg-color" name="bg-color" value="#f7fafc">
+            `;
+            document.body.appendChild(controls);
+
+            document.getElementById('font-size').addEventListener('input', function() {
+                document.querySelector('#reader-content').style.fontSize = this.value + 'px';
+            });
+
+            document.getElementById('font-family').addEventListener('change', function() {
+                document.querySelector('#reader-content').style.fontFamily = this.value;
+            });
+
+            document.getElementById('bg-color').addEventListener('input', function() {
+                document.querySelector('#reader-content').style.backgroundColor = this.value;
+            });
         })();
         """
         browser.page().runJavaScript(reader_js, lambda _: setattr(browser, 'reader_mode_active', True))
