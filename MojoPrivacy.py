@@ -2,6 +2,7 @@ import os
 import json
 import random
 import logging
+import requests
 from typing import Optional, List, Dict
 from PyQt5.QtCore import QUrl, QTimer, QEventLoop, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
@@ -30,7 +31,7 @@ PROXY_LIST = [
     "198.44.171.161:7088", "104.207.53.203:3128", "69.75.140.157:8080",
     "27.147.221.140:5678", "188.132.150.162:8080", "103.120.76.94:2024",
     "144.126.201.25:8192", "101.47.129.222:20000", "156.228.104.70:3128",
-    "198.44.171.161:7088", "104.207.53.203:3128", "69.75.140.157:8080", 
+    "198.44.171.161:7088", "104.207.53.203:3128", "69.75.140.157:8080",
     "27.147.221.140:5678", "188.132.150.162:8080", "103.120.76.94:2024",
     "144.126.201.25:8192", "101.47.129.222:20000", "156.228.104.70:3128"
 ]
@@ -76,9 +77,13 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
         self.working_proxies: List[str] = []
         self.proxy_cache: Dict[str, bool] = {}
         self.proxy_cache_file = "proxy_cache.json"
+        self.tracker_blacklist_url = "https://easylist.to/easylist/easylist.txt"
+        self.tracker_blacklist = set()
         self.load_privacy_settings()
         self.load_proxy_cache()
         self.initialize_proxies()
+        self.update_tracker_blacklist()
+        self.anti_fingerprinting_enabled = True
 
     def load_privacy_settings(self) -> None:
         try:
@@ -87,6 +92,7 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                     settings = json.load(f)
                     self.https_only = settings.get("https_only", True)
                     self.permissions = settings.get("permissions", {})
+                    self.anti_fingerprinting_enabled = settings.get("anti_fingerprinting_enabled", True)
             else:
                 self.save_privacy_settings()
         except Exception as e:
@@ -94,11 +100,12 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
             self.parent.statusBar().showMessage(f"Privacy settings error: {str(e)}", 5000)
             self.https_only = True
             self.permissions = {}
+            self.anti_fingerprinting_enabled = True
 
     def save_privacy_settings(self) -> None:
         try:
             with open("privacy_settings.json", "w", encoding="utf-8") as f:
-                json.dump({"https_only": self.https_only, "permissions": self.permissions}, f, indent=4)
+                json.dump({"https_only": self.https_only, "permissions": self.permissions, "anti_fingerprinting_enabled": self.anti_fingerprinting_enabled}, f, indent=4)
         except Exception as e:
             logger.error(f"Failed to save privacy settings: {str(e)}")
             self.parent.statusBar().showMessage(f"Failed to save privacy settings: {str(e)}", 5000)
@@ -210,10 +217,26 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
             logger.error(f"Failed to apply proxy: {str(e)}")
             self.parent.statusBar().showMessage(f"Proxy error: {str(e)}", 5000)
 
+    def update_tracker_blacklist(self):
+        try:
+            response = requests.get(self.tracker_blacklist_url, timeout=10)
+            response.raise_for_status()
+            blacklist_content = response.text.splitlines()
+            for line in blacklist_content:
+                if line.startswith("||") and not line.startswith("||*"):
+                    domain = line[2:].split("^")[0].split("/")[0]
+                    self.tracker_blacklist.add(domain.lower())
+            logger.info("Updated tracker blacklist from EasyList")
+        except Exception as e:
+            logger.error(f"Failed to update tracker blacklist: {str(e)}")
+            self.parent.statusBar().showMessage("Failed to update tracker blacklist", 5000)
+
     def interceptRequest(self, info) -> None:
         try:
             url = info.requestUrl().toString()
             settings = self.parent.settings_persistence.privacy_settings
+            url_lower = url.lower()
+            url_host = info.requestUrl().host().lower()
 
             if self.https_only and url.startswith("http://"):
                 info.redirect(QUrl(url.replace("http://", "https://")))
@@ -227,10 +250,14 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
 
             if settings.get("block_trackers", False):
                 for pattern in TRACKER_PATTERNS:
-                    if pattern in url.lower():
+                    if pattern in url_lower:
                         info.block(True)
                         self.parent.statusBar().showMessage(f"Blocked tracker: {url}", 2000)
                         return
+                if self.tracker_blacklist and any(domain in url_lower for domain in self.tracker_blacklist):
+                    info.block(True)
+                    self.parent.statusBar().showMessage(f"Blocked tracker from blacklist: {url}", 2000)
+                    return
 
             host = info.requestUrl().host()
             if host in self.permissions:
@@ -239,6 +266,11 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                     info.setHttpHeader(b"Cookie", b"")
                 if not perms.get("allow_js", True):
                     info.block(True)
+
+            if self.anti_fingerprinting_enabled:
+                info.setHttpHeader(b"Accept-Language", b"en-US,en;q=0.5")
+                info.setHttpHeader(b"Accept", b"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                info.setHttpHeader(b"Referer", b"")
         except Exception as e:
             logger.error(f"Error intercepting request: {str(e)}")
             self.parent.statusBar().showMessage(f"Privacy error: {str(e)}", 5000)
@@ -279,6 +311,29 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
                 Object.defineProperty(navigator, 'languages', { value: ['en-US', 'en'], writable: false });
                 Object.defineProperty(navigator, 'webdriver', { value: false, writable: false });
                 window.chrome = window.chrome || {};
+                Object.defineProperty(navigator, 'doNotTrack', { value: '1', writable: false });
+                Object.defineProperty(navigator, 'connection', { 
+                    value: { effectiveType: '4g', rtt: 50, downlink: 10, saveData: false }, 
+                    writable: false 
+                });
+                Object.defineProperty(window, 'devicePixelRatio', { value: 1, writable: false });
+                const originalGetBattery = navigator.getBattery;
+                navigator.getBattery = function() {
+                    return Promise.resolve({
+                        charging: true,
+                        chargingTime: 0,
+                        dischargingTime: Infinity,
+                        level: 1.0
+                    });
+                };
+                Object.defineProperty(navigator, 'plugins', { 
+                    value: [], 
+                    writable: false 
+                });
+                Object.defineProperty(navigator, 'mimeTypes', { 
+                    value: [], 
+                    writable: false 
+                });
             })();
             """
             page.runJavaScript(script)

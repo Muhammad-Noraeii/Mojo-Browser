@@ -704,10 +704,6 @@ class MojoBrowser(QMainWindow):
         self.tab_suspension_timer = QTimer(self)
         self.tab_suspension_timer.timeout.connect(self.suspend_inactive_tabs)
         self.tab_suspension_timer.start(120000)
-        
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.check_for_updates)
-        self.update_timer.start(86400000)
 
     def create_tool_bar(self):
         self.tool_bar = QToolBar("Navigation", self)
@@ -826,14 +822,19 @@ class MojoBrowser(QMainWindow):
         self.layout.addWidget(self.tabs)
 
     def setup_system_tray(self):
-        self.tray_icon = QSystemTrayIcon(QIcon("icons/app_icon.png") if os.path.exists("icons/app_icon.png") else QIcon.fromTheme("web-browser"), self)
-        tray_menu = QMenu()
-        tray_menu.addAction("Restore", self.showNormal)
-        tray_menu.addAction("New Tab", lambda: self.add_new_tab())
-        tray_menu.addAction("Quit", self.close)
-        self.tray_icon.setContextMenu(tray_menu)
-        self.tray_icon.activated.connect(self.tray_activated)
-        self.tray_icon.show()
+        icon_path = "icons/app_icon.png"
+        tray_icon = QIcon(icon_path) if os.path.exists(icon_path) else QIcon.fromTheme("web-browser")
+        if not tray_icon.isNull():
+            self.tray_icon = QSystemTrayIcon(tray_icon, self)
+            tray_menu = QMenu()
+            tray_menu.addAction("Restore", self.showNormal)
+            tray_menu.addAction("New Tab", lambda: self.add_new_tab())
+            tray_menu.addAction("Quit", self.close)
+            self.tray_icon.setContextMenu(tray_menu)
+            self.tray_icon.activated.connect(self.tray_activated)
+            self.tray_icon.show()
+        else:
+            print("Warning: No valid icon found for the system tray.")
 
     def tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
@@ -904,10 +905,8 @@ class MojoBrowser(QMainWindow):
         )
 
     def adjust_color(self, hex_color, amount):
-        color = int(hex_color[1:], 16)
-        r = min(max((color >> 16) + amount, 0), 255)
-        g = min(max(((color >> 8) & 0xFF) + amount, 0), 255)
-        b = min(max((color & 0xFF) + amount, 0), 255)
+        r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
+        r, g, b = [min(max(c + amount, 0), 255) for c in (r, g, b)]
         return f"#{r:02x}{g:02x}{b:02x}"
 
     def add_new_tab(self, url=None):
@@ -944,9 +943,16 @@ class MojoBrowser(QMainWindow):
         browser.loadStarted.connect(lambda: self.statusBar().showMessage("Loading..."))
         browser.loadProgress.connect(lambda p: self.statusBar().showMessage(f"Loading... {p}%"))
         browser.loadFinished.connect(lambda ok, b=browser: (self.load_finished(ok, b), self.extension_manager.inject_extensions(b)))
+        browser.titleChanged.connect(lambda title, b=browser: self.update_tab_title(b, title))
+        browser.iconChanged.connect(lambda icon, b=browser: self.update_tab_icon(b, icon))
         
         browser.setContextMenuPolicy(Qt.CustomContextMenu)
         browser.customContextMenuRequested.connect(lambda pos: self.show_web_context_menu(pos, browser))
+
+    def update_tab_icon(self, browser, icon):
+        index = self.tabs.indexOf(browser)
+        if index >= 0:
+            self.tabs.setTabIcon(index, icon)
 
     def close_tab(self, index):
         if self.tabs.count() > 1:
@@ -954,12 +960,12 @@ class MojoBrowser(QMainWindow):
         else:
             self.close()
 
-    def update_tab_title(self, browser, url):
+    def update_tab_title(self, browser, title):
         index = self.tabs.indexOf(browser)
         if index >= 0:
-            title = browser.page().title() or "New Tab"
-            self.tabs.setTabText(index, title[:30] + "..." if len(title) > 30 else title)
-            self.tabs.setTabToolTip(index, title)
+            title_str = title.toString() if isinstance(title, QUrl) else title
+            self.tabs.setTabText(index, title_str[:30] + "..." if len(title_str) > 30 else title_str)
+            self.tabs.setTabToolTip(index, title_str)
 
     def update_address_bar(self, index):
         if index >= 0:
@@ -1162,7 +1168,12 @@ class MojoBrowser(QMainWindow):
             profile.setHttpCacheMaximumSize(size_mb * 1024 * 1024)
 
     def update_history(self, url):
-        self.settings_persistence.update_history(url)
+        url_str = url.toString()
+        if url_str and (not self.history or url_str != self.history[-1]):
+            self.history.append(url_str)
+            if len(self.history) > 50:
+                self.history.pop(0)
+            self.settings_persistence.save_history()
 
     def clear_history_data(self):
         self.history.clear()
@@ -1384,17 +1395,6 @@ class MojoBrowser(QMainWindow):
                 self.apply_webengine_settings(browser)
                 self.statusBar().showMessage(f"Switched to profile: {profile_name}", 2000)
 
-    def check_for_updates(self):
-        try:
-            response = requests.get("https://api.github.com/repos/Muhammad-Noraeii/MojoBrowser/releases/latest")
-            latest_version = response.json()["tag_name"]
-            current_version = "v0.2.4"
-            if latest_version > current_version:
-                if QMessageBox.question(self, "Update Available", f"Version {latest_version} is available. Update now?", QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
-                    QDesktopServices.openUrl(QUrl("https://github.com/Muhammad-Noraeii/MojoBrowser/releases/latest"))
-        except Exception as e:
-            self.statusBar().showMessage(f"Update check failed: {str(e)}", 5000)
-
     def show_web_context_menu(self, pos, browser):
         menu = QMenu(self)
         menu.setStyleSheet(
@@ -1534,7 +1534,7 @@ class SettingsPersistence:
 
     def update_history(self, url):
         url_str = url.toString()
-        if url_str and url_str not in self.parent.history[-50:]:
+        if url_str and (not self.parent.history or url_str != self.parent.history[-1]):
             self.parent.history.append(url_str)
             if len(self.parent.history) > 50:
                 self.parent.history.pop(0)
