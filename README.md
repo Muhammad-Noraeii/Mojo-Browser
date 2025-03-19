@@ -75,10 +75,10 @@ Mojo Browser is designed to provide a secure and customizable browsing experienc
 ![Main Window Dark Theme](screenshots/main_window_dark.png)
 *Main Window (Dark Theme)*
 
-![Settings Dialog](screenshots/settings_dialog.png)
+![Settings Dialog](screenshots/settings_dialog.PNG)
 *Settings Dialog*
 
-![Extensions Dialog](screenshots/extensions_dialog.png)
+![Extensions Dialog](screenshots/extensions_dialog.PNG)
 *Extensions Dialog*
 
 ![Reader Mode](screenshots/reader_mode.png)
