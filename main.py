@@ -650,27 +650,26 @@ class MojoBrowser(QMainWindow):
         self.setWindowTitle("Mojo Browser")
         self.setGeometry(100, 100, 1280, 800)
         self.setFont(UI_FONT)
-
         self.setWindowIcon(QIcon("icons/Mojo.ico"))
 
         self.settings_persistence = SettingsPersistence(self)
-        self.bookmarks = []
-        self.history = []
-        self.private_profile = None
-        self.privacy_interceptor = PrivacyInterceptor(self)
-        self.privacy_engine = initialize_privacy(self)
-        self.new_tab_behavior = "Home Page"
-        self.hardware_acceleration = True
-        self.preload_pages = False
-        self.cache_size_limit = "250 MB"
-        self.downloads = {}
-        self.download_dialog = None
-        self.profiles = {"Default": QWebEngineProfile.defaultProfile()}
-
         self.extension_manager = ExtensionManager(self)
+        self.privacy_engine = initialize_privacy(self)
+        self.profiles = {"Default": QWebEngineProfile.defaultProfile()}
+        self.downloads = {}
+        self.private_profile = None
+        self.download_dialog = None
+
+        self._initialize_settings()
+        self._initialize_ui()
+        self._initialize_timers()
+
+    def _initialize_settings(self):
         self.extension_manager.load_extension_status()
         self.extension_manager.load_extensions()
+        self.settings_persistence.load_settings()
 
+    def _initialize_ui(self):
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
         self.layout = QVBoxLayout(self.central_widget)
@@ -682,17 +681,15 @@ class MojoBrowser(QMainWindow):
         self.setup_system_tray()
         self.setup_download_manager()
 
-        self.settings_persistence.load_settings()
-        self.apply_styles()  
-        self.add_new_tab(QUrl(self.home_page))
-
         self.status_bar = QStatusBar()
         self.status_bar.setFont(UI_FONT)
         self.setStatusBar(self.status_bar)
 
-        self.setup_shortcuts()
         self.apply_styles()
+        self.add_new_tab(QUrl(self.home_page))
+        self.setup_shortcuts()
 
+    def _initialize_timers(self):
         self.cache_timer = QTimer(self)
         self.cache_timer.timeout.connect(self.update_cache_size_periodic)
         self.cache_timer.start(30000)
@@ -704,6 +701,19 @@ class MojoBrowser(QMainWindow):
         self.tab_suspension_timer = QTimer(self)
         self.tab_suspension_timer.timeout.connect(self.suspend_inactive_tabs)
         self.tab_suspension_timer.start(120000)
+
+        self.memory_optimization_timer = QTimer(self)
+        self.memory_optimization_timer.timeout.connect(self.optimize_memory_usage)
+        self.memory_optimization_timer.start(60000) 
+
+    def optimize_memory_usage(self):
+        current_browser = self.tabs.currentWidget()
+        for i in range(self.tabs.count()):
+            browser = self.tabs.widget(i)
+            if browser and browser != current_browser:
+                browser.page().setLifecycleState(QWebEnginePage.LifecycleState.Discarded)
+                browser.page().setBackgroundColor(QColor(DARK_MODE_BACKGROUND if self.theme == "Dark" else LIGHT_MODE_BACKGROUND))
+        QWebEngineProfile.defaultProfile().clearHttpCache()  
 
     def create_tool_bar(self):
         self.tool_bar = QToolBar("Navigation", self)
@@ -877,8 +887,8 @@ class MojoBrowser(QMainWindow):
     def get_input_style(self):
         theme = self.theme
         return (
-            f"QLineEdit, QComboBox, QTextEdit {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; "
+            f"QLineEdit, QComboBox, QTextEdit {{ background-color: {DARK_MODE_ACCENT if theme == "Dark" else LIGHT_MODE_ACCENT}; "
+            f"color: {DARK_MODE_TEXT if theme == "Dark" else LIGHT_MODE_TEXT}; border: 1px solid {'#4B5563' if theme == "Dark" else '#D1D5DB'}; "
             f"border-radius: {BORDER_RADIUS}; padding: 10px; font-size: 14px; }}"
             f"QLineEdit:focus, QComboBox:focus {{ border: 2px solid {PRIMARY_COLOR}; }}"
         )
@@ -949,12 +959,18 @@ class MojoBrowser(QMainWindow):
         browser.setContextMenuPolicy(Qt.CustomContextMenu)
         browser.customContextMenuRequested.connect(lambda pos: self.show_web_context_menu(pos, browser))
 
+        browser.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, False)  
+        browser.settings().setAttribute(QWebEngineSettings.FullScreenSupportEnabled, False)  
+
     def update_tab_icon(self, browser, icon):
         index = self.tabs.indexOf(browser)
         if index >= 0:
             self.tabs.setTabIcon(index, icon)
 
     def close_tab(self, index):
+        browser = self.tabs.widget(index)
+        if browser:
+            browser.deleteLater()  
         if self.tabs.count() > 1:
             self.tabs.removeTab(index)
         else:
@@ -1163,9 +1179,8 @@ class MojoBrowser(QMainWindow):
         profile.setUrlRequestInterceptor(self.privacy_engine)
         self.privacy_engine.apply_proxy(profile)
         
-        if self.cache_size_limit != "Unlimited":
-            size_mb = int(self.cache_size_limit.split()[0])
-            profile.setHttpCacheMaximumSize(size_mb * 1024 * 1024)
+        profile.setHttpCacheMaximumSize(50 * 1024 * 1024)  
+        profile.setHttpCacheType(QWebEngineProfile.MemoryHttpCache)  
 
     def update_history(self, url):
         url_str = url.toString()
@@ -1208,6 +1223,7 @@ class MojoBrowser(QMainWindow):
             os.makedirs(self.download_path)
         profile = QWebEngineProfile.defaultProfile()
         profile.downloadRequested.connect(self.handle_download)
+        QWebEngineProfile.defaultProfile().setPersistentCookiesPolicy(QWebEngineProfile.NoPersistentCookies) 
 
     def handle_download(self, download):
         suggested_path = os.path.join(self.download_path, download.suggestedFileName())
