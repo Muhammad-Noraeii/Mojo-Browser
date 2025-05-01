@@ -17,6 +17,7 @@ import requests
 
 from addon import ExtensionManager
 from MojoPrivacy import PrivacyEngine, PrivacyPage, initialize_privacy
+from data_manager import DataManager
 
 PRIMARY_COLOR = "#3B82F6"
 SECONDARY_COLOR = "#475569"
@@ -52,8 +53,9 @@ class ExtensionsDialog(QDialog):
         self.extensions_list = QListWidget()
         self.extensions_list.setStyleSheet(self.parent.get_list_style())
         self.parent.extension_manager.load_extensions()
-        for ext_name in self.parent.extension_manager.extensions.keys():
-            item = QListWidgetItem(ext_name)
+        for ext_name, display_name in self.parent.extension_manager.display_names.items():
+            item = QListWidgetItem(display_name)
+            item.setData(Qt.UserRole, ext_name)  
             item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
             item.setCheckState(Qt.Checked if self.parent.extension_manager.extension_status.get(ext_name) == 'enabled' else Qt.Unchecked)
             self.extensions_list.addItem(item)
@@ -89,14 +91,14 @@ class ExtensionsDialog(QDialog):
     def enable_selected_extension(self):
         selected = self.extensions_list.currentItem()
         if selected and selected.checkState() != Qt.Checked:
-            ext_name = selected.text()
+            ext_name = selected.data(Qt.UserRole)
             self.parent.extension_manager.enable_extension(ext_name)
             selected.setCheckState(Qt.Checked)
 
     def disable_selected_extension(self):
         selected = self.extensions_list.currentItem()
         if selected and selected.checkState() == Qt.Checked:
-            ext_name = selected.text()
+            ext_name = selected.data(Qt.UserRole)
             self.parent.extension_manager.disable_extension(ext_name)
             selected.setCheckState(Qt.Unchecked)
 
@@ -105,7 +107,9 @@ class ExtensionsDialog(QDialog):
         if ok and url:
             ext_name = self.parent.extension_manager.download_extension(url)
             if ext_name:
-                item = QListWidgetItem(ext_name)
+                display_name = self.parent.extension_manager.display_names.get(ext_name, ext_name)
+                item = QListWidgetItem(display_name)
+                item.setData(Qt.UserRole, ext_name)
                 item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
                 item.setCheckState(Qt.Unchecked)
                 self.extensions_list.addItem(item)
@@ -176,7 +180,9 @@ class ExtensionsDialog(QDialog):
                 url = item.data(Qt.UserRole)
                 ext_name = self.parent.extension_manager.download_extension(url)
                 if ext_name:
-                    list_item = QListWidgetItem(ext_name)
+                    display_name = self.parent.extension_manager.display_names.get(ext_name, ext_name)
+                    list_item = QListWidgetItem(display_name)
+                    list_item.setData(Qt.UserRole, ext_name)
                     list_item.setFlags(list_item.flags() | Qt.ItemIsUserCheckable)
                     list_item.setCheckState(Qt.Unchecked)
                     self.extensions_list.addItem(list_item)
@@ -185,7 +191,7 @@ class ExtensionsDialog(QDialog):
     def close_dialog(self):
         for i in range(self.extensions_list.count()):
             item = self.extensions_list.item(i)
-            ext_name = item.text()
+            ext_name = item.data(Qt.UserRole)
             is_enabled = item.checkState() == Qt.Checked
             if is_enabled:
                 self.parent.extension_manager.enable_extension(ext_name)
@@ -652,6 +658,7 @@ class MojoBrowser(QMainWindow):
         self.setFont(UI_FONT)
         self.setWindowIcon(QIcon("icons/Mojo.ico"))
 
+        self.data_manager = DataManager()
         self.settings_persistence = SettingsPersistence(self)
         self.extension_manager = ExtensionManager(self)
         self.privacy_engine = initialize_privacy(self)
@@ -665,7 +672,6 @@ class MojoBrowser(QMainWindow):
         self._initialize_timers()
 
     def _initialize_settings(self):
-        self.extension_manager.load_extension_status()
         self.extension_manager.load_extensions()
         self.settings_persistence.load_settings()
 
@@ -796,7 +802,7 @@ class MojoBrowser(QMainWindow):
         )
 
     def apply_styles(self):
-        theme = self.theme
+        theme = self.theme 
         main_background, main_text_color, input_background, input_border = (
             (DARK_MODE_BACKGROUND, DARK_MODE_TEXT, DARK_MODE_ACCENT, "#4B5563") if theme == "Dark" 
             else (LIGHT_MODE_BACKGROUND, LIGHT_MODE_TEXT, LIGHT_MODE_ACCENT, "#D1D5DB")
@@ -832,7 +838,7 @@ class MojoBrowser(QMainWindow):
         self.layout.addWidget(self.tabs)
 
     def setup_system_tray(self):
-        icon_path = "icons/app_icon.png"
+        icon_path = "icons/Mojo.png"
         tray_icon = QIcon(icon_path) if os.path.exists(icon_path) else QIcon.fromTheme("web-browser")
         if not tray_icon.isNull():
             self.tray_icon = QSystemTrayIcon(tray_icon, self)
@@ -1207,16 +1213,6 @@ class MojoBrowser(QMainWindow):
                 browser.page().runJavaScript("window.gc && window.gc();")
         self.suspend_inactive_tabs()
 
-    def closeEvent(self, event):
-        if self.settings_persistence.privacy_settings["clear_data_on_exit"]:
-            self.settings_persistence.clear_all_private_data()
-        if self.tray_icon.isVisible():
-            self.hide()
-            self.tray_icon.showMessage("Mojo Browser", "Running in background", QSystemTrayIcon.Information, 2000)
-            event.ignore()
-        else:
-            super().closeEvent(event)
-
     def setup_download_manager(self):
         self.download_path = QDir.homePath() + "/Downloads"
         if not os.path.exists(self.download_path):
@@ -1428,70 +1424,53 @@ class MojoBrowser(QMainWindow):
 class SettingsPersistence:
     def __init__(self, parent):
         self.parent = parent
-        self.settings_file = "settings.json"
-        self.bookmarks_file = "bookmarks.json"
-        self.history_file = "history.json"
-        self.privacy_settings = {
+        self.data_manager = DataManager()
+        self.privacy_settings = self.data_manager.get_browser_settings().get("privacy_settings", {
             "do_not_track": True,
             "block_third_party_cookies": True,
             "block_trackers": False,
             "clear_data_on_exit": False,
             "private_browsing": False,
             "fingerprint_protection": False
-        }
+        })
         self.load_settings()
         self.load_bookmarks()
         self.load_history()
 
     def load_settings(self):
-        if os.path.exists(self.settings_file):
-            with open(self.settings_file, "r", encoding="utf-8") as file:
-                settings = json.load(file)
-                self.parent.home_page = settings.get("home_page", self.parent.DEFAULT_HOME_PAGE)
-                self.parent.search_engine = settings.get("search_engine", "Google")
-                self.parent.theme = settings.get("theme", "Dark")
-                self.parent.javascript_enabled = settings.get("javascript_enabled", True)
-                self.parent.block_popups = settings.get("block_popups", True)
-                self.parent.block_mixed_content = settings.get("block_mixed_content", True)
-                self.parent.new_tab_behavior = settings.get("new_tab_behavior", "Home Page")
-                self.parent.hardware_acceleration = settings.get("hardware_acceleration", True)
-                self.parent.preload_pages = settings.get("preload_pages", False)
-                self.parent.cache_size_limit = settings.get("cache_size_limit", "250 MB")
-                self.privacy_settings.update(settings.get("privacy_settings", {}))
-        else:
-            self.parent.home_page = self.parent.DEFAULT_HOME_PAGE
-            self.parent.search_engine = "Google"
-            self.parent.theme = "Dark"
-            self.parent.javascript_enabled = True
-            self.parent.block_popups = True
-            self.parent.block_mixed_content = True
-            self.parent.new_tab_behavior = "Home Page"
-            self.parent.hardware_acceleration = True
-            self.parent.preload_pages = False
-            self.parent.cache_size_limit = "250 MB"
+        settings = self.data_manager.get_browser_settings()
+        self.parent.home_page = settings.get("home_page", self.parent.DEFAULT_HOME_PAGE)
+        self.parent.search_engine = settings.get("search_engine", "Google")
+        self.parent.theme = settings.get("theme", "Dark")
+        self.parent.javascript_enabled = settings.get("javascript_enabled", True)
+        self.parent.block_popups = settings.get("block_popups", True)
+        self.parent.block_mixed_content = settings.get("block_mixed_content", True)
+        self.parent.new_tab_behavior = settings.get("new_tab_behavior", "Home Page")
+        self.parent.hardware_acceleration = settings.get("hardware_acceleration", True)
+        self.parent.preload_pages = settings.get("preload_pages", False)
+        self.parent.cache_size_limit = settings.get("cache_size_limit", "250 MB")
+        self.privacy_settings.update(settings.get("privacy_settings", {}))
 
     def save_settings(self):
-        with open(self.settings_file, "w", encoding="utf-8") as file:
-            json.dump({
-                "home_page": self.parent.home_page,
-                "search_engine": self.parent.search_engine,
-                "theme": self.parent.theme,
-                "javascript_enabled": self.parent.javascript_enabled,
-                "block_popups": self.parent.block_popups,
-                "block_mixed_content": self.parent.block_mixed_content,
-                "new_tab_behavior": self.parent.new_tab_behavior,
-                "hardware_acceleration": self.parent.hardware_acceleration,
-                "preload_pages": self.parent.preload_pages,
-                "cache_size_limit": self.parent.cache_size_limit,
-                "privacy_settings": self.privacy_settings
-            }, file, indent=4)
+        self.data_manager.set_browser_settings({
+            "home_page": self.parent.home_page,
+            "search_engine": self.parent.search_engine,
+            "theme": self.parent.theme,
+            "javascript_enabled": self.parent.javascript_enabled,
+            "block_popups": self.parent.block_popups,
+            "block_mixed_content": self.parent.block_mixed_content,
+            "new_tab_behavior": self.parent.new_tab_behavior,
+            "hardware_acceleration": self.parent.hardware_acceleration,
+            "preload_pages": self.parent.preload_pages,
+            "cache_size_limit": self.parent.cache_size_limit,
+            "privacy_settings": self.privacy_settings
+        })
 
     def load_bookmarks(self):
-        self.parent.bookmarks = json.load(open(self.bookmarks_file, "r", encoding="utf-8")) if os.path.exists(self.bookmarks_file) else []
+        self.parent.bookmarks = self.data_manager.get_bookmarks()
 
     def save_bookmarks(self):
-        with open(self.bookmarks_file, "w", encoding="utf-8") as file:
-            json.dump(self.parent.bookmarks, file, indent=4)
+        self.data_manager.set_bookmarks(self.parent.bookmarks)
 
     def add_bookmark(self):
         browser = self.parent.tabs.currentWidget()
@@ -1509,104 +1488,142 @@ class SettingsPersistence:
     def view_bookmarks(self):
         dialog = QDialog(self.parent)
         dialog.setWindowTitle("Bookmarks")
-        dialog.setGeometry(300, 300, 550, 450)
-        layout = QVBoxLayout(dialog)
-        bookmark_list = QListWidget()
+        dialog.setGeometry(300, 300, 500, 400)
+        dialog.setFont(UI_FONT)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(12)
+
+        bookmarks_list = QListWidget()
+        bookmarks_list.setStyleSheet(self.parent.get_list_style())
         for bookmark in self.parent.bookmarks:
-            item = QListWidgetItem(bookmark["title"])
+            item = QListWidgetItem(f"{bookmark['title']} - {bookmark['url']}")
             item.setData(Qt.UserRole, bookmark["url"])
-            bookmark_list.addItem(item)
-        bookmark_list.setStyleSheet(self.parent.get_list_style())
-        bookmark_list.itemDoubleClicked.connect(lambda item: self.parent.tabs.currentWidget().setUrl(QUrl(item.data(Qt.UserRole))))
-        layout.addWidget(bookmark_list)
-        
+            bookmarks_list.addItem(item)
+        layout.addWidget(bookmarks_list)
+
         buttons_layout = QHBoxLayout()
-        remove_button = QPushButton("Remove Selected")
-        remove_button.setStyleSheet(self.parent.get_button_style("#EF4444", "#F87171", "#DC2626"))
-        remove_button.clicked.connect(lambda: self.remove_bookmark(bookmark_list))
-        close_button = QPushButton("Close")
-        close_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
-        close_button.clicked.connect(dialog.accept)
-        buttons_layout.addWidget(remove_button)
+        open_button = QPushButton("Open")
+        open_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
+        open_button.clicked.connect(lambda: self.open_selected_bookmark(bookmarks_list))
+        delete_button = QPushButton("Delete")
+        delete_button.setStyleSheet(self.parent.get_button_style("#EF4444", "#F87171", "#DC2626"))
+        delete_button.clicked.connect(lambda: self.delete_selected_bookmark(bookmarks_list))
+        buttons_layout.addWidget(open_button)
+        buttons_layout.addWidget(delete_button)
         buttons_layout.addStretch()
-        buttons_layout.addWidget(close_button)
         layout.addLayout(buttons_layout)
+
+        close_button = QPushButton("Close")
+        close_button.setStyleSheet(self.parent.get_button_style(SECONDARY_COLOR, "#6B7280", "#374151"))
+        close_button.clicked.connect(dialog.accept)
+        layout.addWidget(close_button)
+
+        dialog.setLayout(layout)
         dialog.exec_()
 
-    def remove_bookmark(self, bookmark_list):
-        selected = bookmark_list.currentItem()
+    def open_selected_bookmark(self, bookmarks_list):
+        selected = bookmarks_list.currentItem()
+        if selected:
+            url = selected.data(Qt.UserRole)
+            browser = self.parent.tabs.currentWidget()
+            if browser:
+                browser.setUrl(QUrl(url))
+            else:
+                self.parent.add_new_tab(QUrl(url))
+
+    def delete_selected_bookmark(self, bookmarks_list):
+        selected = bookmarks_list.currentItem()
         if selected:
             url = selected.data(Qt.UserRole)
             self.parent.bookmarks = [b for b in self.parent.bookmarks if b["url"] != url]
             self.save_bookmarks()
-            bookmark_list.takeItem(bookmark_list.currentRow())
+            bookmarks_list.takeItem(bookmarks_list.row(selected))
 
     def load_history(self):
-        self.parent.history = json.load(open(self.history_file, "r", encoding="utf-8")) if os.path.exists(self.history_file) else []
+        self.parent.history = self.data_manager.get_history()
 
     def save_history(self):
-        with open(self.history_file, "w", encoding="utf-8") as file:
-            json.dump(self.parent.history, file, indent=4)
-
-    def update_history(self, url):
-        url_str = url.toString()
-        if url_str and (not self.parent.history or url_str != self.parent.history[-1]):
-            self.parent.history.append(url_str)
-            if len(self.parent.history) > 50:
-                self.parent.history.pop(0)
-            self.save_history()
+        self.data_manager.set_history(self.parent.history)
 
     def view_history(self):
         dialog = QDialog(self.parent)
         dialog.setWindowTitle("History")
-        dialog.setGeometry(300, 300, 550, 450)
-        layout = QVBoxLayout(dialog)
+        dialog.setGeometry(300, 300, 500, 400)
+        dialog.setFont(UI_FONT)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setSpacing(12)
+
         history_list = QListWidget()
-        for url in reversed(self.parent.history[-50:]):
-            history_list.addItem(url)
         history_list.setStyleSheet(self.parent.get_list_style())
-        history_list.itemDoubleClicked.connect(lambda item: self.parent.tabs.currentWidget().setUrl(QUrl(item.text())))
+        for url in self.parent.history:
+            item = QListWidgetItem(url)
+            item.setData(Qt.UserRole, url)
+            history_list.addItem(item)
         layout.addWidget(history_list)
-        
+
         buttons_layout = QHBoxLayout()
-        clear_button = QPushButton("Clear History")
-        clear_button.setStyleSheet(self.parent.get_button_style("#EF4444", "#F87171", "#DC2626"))
-        clear_button.clicked.connect(self.clear_history)
-        close_button = QPushButton("Close")
-        close_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
-        close_button.clicked.connect(dialog.accept)
-        buttons_layout.addWidget(clear_button)
+        open_button = QPushButton("Open")
+        open_button.setStyleSheet(self.parent.get_button_style(PRIMARY_COLOR, BUTTON_HOVER_COLOR, BUTTON_PRESSED_COLOR))
+        open_button.clicked.connect(lambda: self.open_selected_history(history_list))
+        delete_button = QPushButton("Delete")
+        delete_button.setStyleSheet(self.parent.get_button_style("#EF4444", "#F87171", "#DC2626"))
+        delete_button.clicked.connect(lambda: self.delete_selected_history(history_list))
+        buttons_layout.addWidget(open_button)
+        buttons_layout.addWidget(delete_button)
         buttons_layout.addStretch()
-        buttons_layout.addWidget(close_button)
         layout.addLayout(buttons_layout)
+
+        close_button = QPushButton("Close")
+        close_button.setStyleSheet(self.parent.get_button_style(SECONDARY_COLOR, "#6B7280", "#374151"))
+        close_button.clicked.connect(dialog.accept)
+        layout.addWidget(close_button)
+
+        dialog.setLayout(layout)
         dialog.exec_()
 
-    def clear_history(self):
-        self.parent.history.clear()
-        self.save_history()
-        QMessageBox.information(self.parent, "History Cleared", "Browsing history has been cleared.", QMessageBox.Ok)
+    def open_selected_history(self, history_list):
+        selected = history_list.currentItem()
+        if selected:
+            url = selected.data(Qt.UserRole)
+            browser = self.parent.tabs.currentWidget()
+            if browser:
+                browser.setUrl(QUrl(url))
+            else:
+                self.parent.add_new_tab(QUrl(url))
+
+    def delete_selected_history(self, history_list):
+        selected = history_list.currentItem()
+        if selected:
+            url = selected.data(Qt.UserRole)
+            self.parent.history = [h for h in self.parent.history if h != url]
+            self.save_history()
+            history_list.takeItem(history_list.row(selected))
 
     def clear_all_private_data(self):
-        self.clear_history()
-        profile = QWebEngineProfile.defaultProfile()
-        profile.clearHttpCache()
-        profile.clearAllVisitedLinks()
+        QWebEngineProfile.defaultProfile().clearHttpCache()
+        QWebEngineProfile.defaultProfile().clearAllVisitedLinks()
         self.parent.bookmarks.clear()
+        self.parent.history.clear()
         self.save_bookmarks()
+        self.save_history()
+        QMessageBox.information(self.parent, "Data Cleared", "All private data has been cleared.", QMessageBox.Ok)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     app.setFont(UI_FONT)
-    palette = app.palette()
-    palette.setColor(QPalette.Window, QColor(LIGHT_MODE_BACKGROUND))
-    palette.setColor(QPalette.WindowText, QColor(LIGHT_MODE_TEXT))
+
+    palette = QPalette()
+    palette.setColor(QPalette.Window, QColor(DARK_MODE_BACKGROUND))
+    palette.setColor(QPalette.WindowText, QColor(DARK_MODE_TEXT))
+    palette.setColor(QPalette.Base, QColor(DARK_MODE_ACCENT))
+    palette.setColor(QPalette.Text, QColor(DARK_MODE_TEXT))
+    palette.setColor(QPalette.Button, QColor(PRIMARY_COLOR))
+    palette.setColor(QPalette.ButtonText, QColor(TEXT_COLOR))
     app.setPalette(palette)
-    
-    try:
-        browser = MojoBrowser()
-        browser.show()
-        sys.exit(app.exec_())
-    except Exception as e:
-        QMessageBox.critical(None, "Error", f"Failed to start browser: {str(e)}")
-        sys.exit(1)
+
+    browser = MojoBrowser()
+    browser.show()
+    sys.exit(app.exec_())

@@ -8,6 +8,7 @@ from PyQt5.QtCore import QUrl, QTimer, QEventLoop, QThread, pyqtSignal, pyqtSlot
 from PyQt5.QtWebEngineCore import QWebEngineUrlRequestInterceptor
 from PyQt5.QtWebEngineWidgets import QWebEngineProfile, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkProxy, QNetworkAccessManager, QNetworkRequest
+from data_manager import DataManager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -24,16 +25,6 @@ TRACKER_PATTERNS = [
     r"facebook\.com/tr", r"twitter\.com/i/", r"pixel\.quantserve\.com",
     r"scorecardresearch\.com", r"adnxs\.com", r"outbrain\.com", r"taboola\.com",
     r"mixpanel\.com", r"hotjar\.com", r"quantcast\.com", r"krxd\.net",
-]
-
-PROXY_LIST = [
-    "88.135.41.109:4145", "103.251.223.105:6084", "182.160.110.154:9898",
-    "198.44.171.161:7088", "104.207.53.203:3128", "69.75.140.157:8080",
-    "27.147.221.140:5678", "188.132.150.162:8080", "103.120.76.94:2024",
-    "144.126.201.25:8192", "101.47.129.222:20000", "156.228.104.70:3128",
-    "198.44.171.161:7088", "104.207.53.203:3128", "69.75.140.157:8080",
-    "27.147.221.140:5678", "188.132.150.162:8080", "103.120.76.94:2024",
-    "144.126.201.25:8192", "101.47.129.222:20000", "156.228.104.70:3128"
 ]
 
 class ProxyTester(QThread):
@@ -70,59 +61,70 @@ class PrivacyEngine(QWebEngineUrlRequestInterceptor):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        self.https_only: bool = True
-        self.permissions: Dict[str, dict] = {}
-        self.proxy_settings: Optional[QNetworkProxy] = None
-        self.proxy_list: List[str] = PROXY_LIST[:]
-        self.working_proxies: List[str] = []
-        self.proxy_cache: Dict[str, bool] = {}
-        self.proxy_cache_file = "proxy_cache.json"
+        self.data_manager = DataManager()
+        self.https_only = True
+        self.permissions = {}
+        self.proxy_settings = None
+        self.proxy_list = self.load_proxies_from_file()
+        self.working_proxies = []
+        self.proxy_cache = self.data_manager.get_proxy_cache()
         self.tracker_blacklist_url = "https://easylist.to/easylist/easylist.txt"
         self.tracker_blacklist = set()
         self.load_privacy_settings()
-        self.load_proxy_cache()
         self.initialize_proxies()
         self.update_tracker_blacklist()
         self.anti_fingerprinting_enabled = True
 
+    def load_proxies_from_file(self, filename="Proxy.txt") -> List[str]:
+        proxies = []
+        try:
+            if os.path.exists(filename):
+                with open(filename, "r", encoding="utf-8") as file:
+                    for line in file:
+                        line = line.strip()
+                        if line and ":" in line:  
+                            proxies.append(line)
+                logger.info(f"Loaded {len(proxies)} proxies from {filename}")
+            else:
+                logger.error(f"Proxy file {filename} not found")
+                self.parent.statusBar().showMessage(f"Proxy file {filename} not found", 5000)
+        except Exception as e:
+            logger.error(f"Failed to load proxies from {filename}: {str(e)}")
+            self.parent.statusBar().showMessage(f"Error loading proxies: {str(e)}", 5000)
+        return proxies
+
     def load_privacy_settings(self) -> None:
         try:
-            if os.path.exists("privacy_settings.json"):
-                with open("privacy_settings.json", "r", encoding="utf-8") as f:
-                    settings = json.load(f)
-                    self.https_only = settings.get("https_only", True)
-                    self.permissions = settings.get("permissions", {})
-                    self.anti_fingerprinting_enabled = settings.get("anti_fingerprinting_enabled", True)
-            else:
-                self.save_privacy_settings()
+            settings = self.data_manager.get_privacy_settings()
+            self.https_only = settings.get("https_only", True)
+            self.permissions = settings.get("permissions", {})
+            self.anti_fingerprinting_enabled = settings.get("anti_fingerprinting_enabled", True)
         except Exception as e:
             logger.error(f"Failed to load privacy settings: {str(e)}")
             self.parent.statusBar().showMessage(f"Privacy settings error: {str(e)}", 5000)
-            self.https_only = True
-            self.permissions = {}
-            self.anti_fingerprinting_enabled = True
+            self.save_privacy_settings()
 
     def save_privacy_settings(self) -> None:
         try:
-            with open("privacy_settings.json", "w", encoding="utf-8") as f:
-                json.dump({"https_only": self.https_only, "permissions": self.permissions, "anti_fingerprinting_enabled": self.anti_fingerprinting_enabled}, f, indent=4)
+            self.data_manager.set_privacy_settings({
+                "https_only": self.https_only,
+                "permissions": self.permissions,
+                "anti_fingerprinting_enabled": self.anti_fingerprinting_enabled
+            })
         except Exception as e:
             logger.error(f"Failed to save privacy settings: {str(e)}")
             self.parent.statusBar().showMessage(f"Failed to save privacy settings: {str(e)}", 5000)
 
     def load_proxy_cache(self) -> None:
         try:
-            if os.path.exists(self.proxy_cache_file):
-                with open(self.proxy_cache_file, "r", encoding="utf-8") as f:
-                    self.proxy_cache = json.load(f)
+            self.proxy_cache = self.data_manager.get_proxy_cache()
         except Exception as e:
             logger.error(f"Failed to load proxy cache: {str(e)}")
             self.proxy_cache = {}
 
     def save_proxy_cache(self) -> None:
         try:
-            with open(self.proxy_cache_file, "w", encoding="utf-8") as f:
-                json.dump(self.proxy_cache, f, indent=4)
+            self.data_manager.set_proxy_cache(self.proxy_cache)
         except Exception as e:
             logger.error(f"Failed to save proxy cache: {str(e)}")
 
@@ -378,18 +380,3 @@ def initialize_privacy(browser):
         logger.error(f"Failed to initialize PrivacyEngine: {str(e)}")
         browser.statusBar().showMessage(f"Privacy init failed: {str(e)}", 5000)
         return None
-
-if __name__ == "__main__":
-    from PyQt5.QtWidgets import QApplication
-    import sys
-    app = QApplication(sys.argv)
-    from main import MojoBrowser
-    try:
-        browser = MojoBrowser()
-        browser.show()
-        sys.exit(app.exec_())
-    except Exception as e:
-        logger.error(f"Failed to start browser: {str(e)}")
-        from PyQt5.QtWidgets import QMessageBox
-        QMessageBox.critical(None, "Error", f"Failed to start browser: {str(e)}", QMessageBox.Ok)
-        sys.exit(1)

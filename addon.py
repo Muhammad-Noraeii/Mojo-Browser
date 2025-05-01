@@ -5,6 +5,7 @@ import requests
 import logging
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWebEngineWidgets import QWebEngineSettings
+from data_manager import DataManager
 
 logging.basicConfig(filename='mojo_browser.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -12,14 +13,14 @@ logger = logging.getLogger(__name__)
 class ExtensionManager:
     def __init__(self, browser):
         self.browser = browser
-        self.extensions = {}
-        self.extension_status = {}
+        self.extensions = {}  
+        self.display_names = {}  
+        self.data_manager = DataManager()
+        self.extension_status = self.data_manager.get_extension_status()
         self.extensions_dir = "extensions"
-        self.store_url = "https://mojox.org/MojoBrowser/Assets/js/"
-        self.cache_file = "extension_cache.json"
+        self.store_url = "https://mojox.org/MojoBrowser/Add-Ons/"
         try:
             os.makedirs(self.extensions_dir, exist_ok=True)
-            self.load_extension_status()
             self.load_extensions()
             self.update_extension_cache()
         except Exception as e:
@@ -30,13 +31,28 @@ class ExtensionManager:
         try:
             ext_files = glob.glob(f"{self.extensions_dir}/*.js")
             self.extensions.clear()
+            self.display_names.clear()
             for ext_file in ext_files:
                 ext_name = os.path.splitext(os.path.basename(ext_file))[0]
                 self.extensions[ext_name] = ext_file
-                logger.info(f"Loaded extension: {ext_name}")
+                display_name = self.get_extension_display_name(ext_file)
+                self.display_names[ext_name] = display_name
+                logger.info(f"Loaded extension: {ext_name} (Display: {display_name})")
             self.validate_extensions()
         except Exception as e:
             logger.error(f"Failed to load extensions: {str(e)}")
+
+    def get_extension_display_name(self, ext_path):
+        try:
+            with open(ext_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("// @Name :"):
+                        return line[len("// @Name :"):].strip()
+            return os.path.splitext(os.path.basename(ext_path))[0]
+        except Exception as e:
+            logger.error(f"Failed to read display name for {ext_path}: {str(e)}")
+            return os.path.splitext(os.path.basename(ext_path))[0]
 
     def validate_extensions(self):
         for ext_name, ext_path in list(self.extensions.items()):
@@ -45,17 +61,19 @@ class ExtensionManager:
                     js_code = f.read()
                     if not js_code.strip() or "malicious" in js_code.lower():
                         del self.extensions[ext_name]
+                        del self.display_names[ext_name]
                         os.remove(ext_path)
                         logger.warning(f"Removed invalid or potentially malicious extension: {ext_name}")
             except Exception as e:
                 logger.error(f"Failed to validate extension {ext_name}: {str(e)}")
                 del self.extensions[ext_name]
+                del self.display_names[ext_name]
 
     def enable_extension(self, ext_name):
         try:
             if ext_name in self.extensions and self.extension_status.get(ext_name) != 'enabled':
                 self.extension_status[ext_name] = 'enabled'
-                self.save_extension_status()
+                self.data_manager.set_extension_status(self.extension_status)
                 self.inject_extension(ext_name)
                 logger.info(f"Enabled extension: {ext_name}")
         except Exception as e:
@@ -65,27 +83,10 @@ class ExtensionManager:
         try:
             if ext_name in self.extension_status:
                 self.extension_status[ext_name] = 'disabled'
-                self.save_extension_status()
+                self.data_manager.set_extension_status(self.extension_status)
                 logger.info(f"Disabled extension: {ext_name}")
         except Exception as e:
             logger.error(f"Failed to disable extension {ext_name}: {str(e)}")
-
-    def save_extension_status(self):
-        try:
-            with open("extension_status.json", "w", encoding="utf-8") as f:
-                json.dump(self.extension_status, f, indent=4)
-            logger.info("Saved extension status")
-        except Exception as e:
-            logger.error(f"Failed to save extension status: {str(e)}")
-
-    def load_extension_status(self):
-        try:
-            if os.path.exists("extension_status.json"):
-                with open("extension_status.json", "r", encoding="utf-8") as f:
-                    self.extension_status = json.load(f)
-                logger.info("Loaded extension status")
-        except Exception as e:
-            logger.error(f"Failed to load extension status: {str(e)}")
 
     def download_extension(self, url):
         try:
@@ -96,9 +97,11 @@ class ExtensionManager:
             with open(ext_path, "w", encoding="utf-8") as f:
                 f.write(response.text)
             self.extensions[ext_name] = ext_path
+            display_name = self.get_extension_display_name(ext_path)
+            self.display_names[ext_name] = display_name
             self.load_extensions()
             self.update_extension_cache()
-            logger.info(f"Downloaded extension: {ext_name}")
+            logger.info(f"Downloaded extension: {ext_name} (Display: {display_name})")
             return ext_name
         except Exception as e:
             logger.error(f"Failed to download extension from {url}: {str(e)}")
@@ -106,7 +109,7 @@ class ExtensionManager:
 
     def fetch_store_extensions(self):
         try:
-            response = requests.get(f"{self.store_url}scripts.js", timeout=10)
+            response = requests.get(f"{self.store_url}Add-On-Lists.js", timeout=10)
             response.raise_for_status()
             extensions = response.json()
             self.cache_extensions(extensions)
@@ -139,30 +142,24 @@ class ExtensionManager:
     def update_extension_cache(self):
         try:
             cache = {name: os.path.getmtime(path) for name, path in self.extensions.items()}
-            with open(self.cache_file, "w", encoding="utf-8") as f:
-                json.dump(cache, f)
+            self.data_manager.set_extension_cache(cache)
             logger.info("Updated extension cache")
         except Exception as e:
             logger.error(f"Failed to update extension cache: {str(e)}")
 
     def cache_extensions(self, extensions):
         try:
-            with open(self.cache_file, "r+", encoding="utf-8") as f:
-                cache = json.load(f)
-                cache["store"] = extensions
-                f.seek(0)
-                json.dump(cache, f, indent=4)
+            cache = self.data_manager.get_extension_cache()
+            cache["store"] = extensions
+            self.data_manager.set_extension_cache(cache)
             logger.info("Cached store extensions")
         except Exception as e:
             logger.error(f"Failed to cache store extensions: {str(e)}")
 
     def load_cached_extensions(self):
         try:
-            if os.path.exists(self.cache_file):
-                with open(self.cache_file, "r", encoding="utf-8") as f:
-                    cache = json.load(f)
-                    return cache.get("store", [])
-            return []
+            cache = self.data_manager.get_extension_cache()
+            return cache.get("store", [])
         except Exception as e:
             logger.error(f"Failed to load cached extensions: {str(e)}")
             return []
