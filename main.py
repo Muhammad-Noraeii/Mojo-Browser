@@ -893,8 +893,8 @@ class MojoBrowser(QMainWindow):
     def get_input_style(self):
         theme = self.theme
         return (
-            f"QLineEdit, QComboBox, QTextEdit {{ background-color: {DARK_MODE_ACCENT if theme == "Dark" else LIGHT_MODE_ACCENT}; "
-            f"color: {DARK_MODE_TEXT if theme == "Dark" else LIGHT_MODE_TEXT}; border: 1px solid {'#4B5563' if theme == "Dark" else '#D1D5DB'}; "
+            f"QLineEdit, QComboBox, QTextEdit {{ background-color: {DARK_MODE_ACCENT if theme == 'Dark' else LIGHT_MODE_ACCENT}; "
+            f"color: {DARK_MODE_TEXT if theme == 'Dark' else LIGHT_MODE_TEXT}; border: 1px solid {'#4B5563' if theme == 'Dark' else '#D1D5DB'}; "
             f"border-radius: {BORDER_RADIUS}; padding: 10px; font-size: 14px; }}"
             f"QLineEdit:focus, QComboBox:focus {{ border: 2px solid {PRIMARY_COLOR}; }}"
         )
